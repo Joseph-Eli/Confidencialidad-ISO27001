@@ -1,0 +1,373 @@
+﻿
+Session altered.
+
+
+Session altered.
+
+
+Session altered.
+
+
+##########################  PARTE A: CDB$ROOT  ##########################
+
+===== D00 Contexto de la ejecución =====
+
+CONTENEDOR      EJECUTADO_POR   FECHA
+--------------- --------------- ----------------------------
+CDB$ROOT        SYS             2026-10-22 17:32:25 +00:00
+
+1 row selected.
+
+
+BANNER_FULL
+------------------------------------------------------------------------------------------
+Oracle AI Database 26ai Free Release 23.26.1.0.0 - Develop, Learn, and Run for Free
+Version 23.26.1.0.0
+
+
+1 row selected.
+
+
+NAME                                 LOG_MODE     OPEN_MODE
+------------------------------------ ------------ --------------------
+FREE                                 ARCHIVELOG   READ WRITE
+
+1 row selected.
+
+
+    CON_ID NAME                                 OPEN_MODE  RES
+---------- ------------------------------------ ---------- ---
+         2 PDB$SEED                             READ ONLY  NO
+         3 FREEPDB1                             READ WRITE NO
+         6 FREEPDB2                             READ WRITE NO
+
+3 rows selected.
+
+
+===== D01 Cuentas con privilegios administrativos (archivo de contraseñas) =====
+
+USERNAME                     SYSDB SYSOP SYSBA SYSDG SYSKM     CON_ID
+---------------------------- ----- ----- ----- ----- ----- ----------
+SYS                          TRUE  TRUE  FALSE FALSE FALSE          0
+
+1 row selected.
+
+
+===== D02 Cifrado TDE: estado del keystore =====
+
+    CON_ID WRL_TYPE             WRL_PARAMETER                                 STATUS                         WALLET_TYPE          KEYSTORE
+---------- -------------------- --------------------------------------------- ------------------------------ -------------------- --------
+         1 FILE                 /opt/oracle/admin/FREE/wallet                 NOT_AVAILABLE                  UNKNOWN              NONE
+         2 FILE                                                               NOT_AVAILABLE                  UNKNOWN              UNITED
+         3 FILE                                                               NOT_AVAILABLE                  UNKNOWN              UNITED
+         6 FILE                                                               NOT_AVAILABLE                  UNKNOWN              UNITED
+
+4 rows selected.
+
+
+===== D03 Respaldos RMAN: configuración y últimas piezas =====
+
+no rows selected
+
+
+HANDLE                                                                 ENC COMPLETION_TIME
+---------------------------------------------------------------------- --- -------------------
+/opt/oracle/oradata/FRA/FREE/autobackup/2026_10_07/o1_mf_s_1246057932_ NO  2026-10-07 23:12:17
+odfngjcp_.bkp
+
+/opt/oracle/oradata/respaldos/e6_arch_1nldkldq_55_1_1.bkp              NO  2026-10-07 23:12:05
+/opt/oracle/oradata/FRA/FREE/autobackup/2026_10_07/o1_mf_s_1246057544_ NO  2026-10-07 23:05:44
+odfn28dx_.bkp
+
+/opt/oracle/oradata/respaldos/e1_db_1l32kl23_53_1_1.bkp                NO  2026-10-07 23:05:42
+/opt/oracle/oradata/FRA/FREE/autobackup/2026_10_07/o1_mf_s_1246055731_ NO  2026-10-07 22:35:32
+odfl9n1z_.bkp
+
+/opt/oracle/oradata/respaldos/e1_db_1jc9ij9c_51_1_1.bkp                NO  2026-10-07 22:35:30
+/opt/oracle/oradata/FRA/FREE/autobackup/2026_10_07/o1_mf_s_1246055714_ NO  2026-10-07 22:35:15
+odfl92wp_.bkp
+
+/opt/oracle/oradata/respaldos/e5_db_1hl8ij8l_49_1_1.bkp                NO  2026-10-07 22:35:07
+/opt/oracle/oradata/FRA/FREE/autobackup/2026_10_04/o1_mf_s_1245737283_ NO  2026-10-04 06:08:04
+od3vb41y_.bkp
+
+/opt/oracle/oradata/respaldos/e5_db_1fs9rs9s_47_1_1.bkp                NO  2026-10-04 06:08:01
+
+10 rows selected.
+
+
+Session altered.
+
+
+##########################  PARTE B: FREEPDB1  ##########################
+
+===== D04 Contexto, opciones de seguridad y parámetros =====
+
+CONTENEDOR
+---------------
+FREEPDB1
+
+1 row selected.
+
+
+PARAMETER                        VALUE
+-------------------------------- ----------------------------------------------------------------------
+Fine-grained Auditing            TRUE
+Oracle Database Vault            FALSE
+Oracle Label Security            FALSE
+Real Application Security        TRUE
+Unified Auditing                 TRUE
+
+5 rows selected.
+
+
+NAME                                 VALUE
+------------------------------------ ----------------------------------------------------------------------
+audit_sys_operations                 FALSE
+audit_trail                          NONE
+encrypt_new_tablespaces              CLOUD_ONLY
+os_authent_prefix                    ops$
+recyclebin                           on
+remote_login_passwordfile            EXCLUSIVE
+resource_limit                       TRUE
+sec_max_failed_login_attempts        3
+sec_protocol_error_further_action    (DROP,3)
+sec_return_server_release_banner     FALSE
+sql92_security                       TRUE
+tde_configuration
+undo_retention                       900
+wallet_root
+
+14 rows selected.
+
+
+===== D05 Inventario de cuentas no mantenidas por Oracle  [A5.16] =====
+
+USERNAME                     ACCOUNT_STATUS         PROFILE              AUTHENTI PASSWORD_VERSIONS CREATED             LAST_LOGIN
+---------------------------- ---------------------- -------------------- -------- ----------------- ------------------- ---------------------------------------------------------------------------
+AFIN                         OPEN                   DEFAULT              PASSWORD 11G 12C           2026-09-14 19:41:36
+BASES1                       OPEN                   DEFAULT              PASSWORD 11G 12C           2026-05-26 19:03:16 2026-10-02 22:06:05 +00:00
+GESTOR_RMAN                  OPEN                   DEFAULT              PASSWORD 11G 12C           2026-10-02 22:20:20 2026-10-07 23:20:00 +00:00
+PDBADMIN                     OPEN                   DEFAULT              PASSWORD 11G 12C           2026-01-19 12:23:45
+PI3                          OPEN                   DEFAULT              PASSWORD 11G 12C           2026-09-07 16:34:13 2026-09-07 16:39:17 +00:00
+
+5 rows selected.
+
+
+===== D06 Cuentas con contraseña por defecto  [A5.17] =====
+
+no rows selected
+
+
+===== D07 Reglas de contraseña de los perfiles en uso  [A5.17 / A8.5] =====
+
+PROFILE              RESOURCE_NAME                LIMIT
+-------------------- ---------------------------- ----------------------
+DEFAULT              FAILED_LOGIN_ATTEMPTS        10
+DEFAULT              INACTIVE_ACCOUNT_TIME        365
+DEFAULT              PASSWORD_GRACE_TIME          7
+DEFAULT              PASSWORD_LIFE_TIME           180
+DEFAULT              PASSWORD_LOCK_TIME           1
+DEFAULT              PASSWORD_REUSE_MAX           UNLIMITED
+DEFAULT              PASSWORD_REUSE_TIME          UNLIMITED
+DEFAULT              PASSWORD_ROLLOVER_TIME       0
+DEFAULT              PASSWORD_VERIFY_FUNCTION     NULL
+
+9 rows selected.
+
+
+===== D08 Privilegios de sistema críticos fuera de Oracle  [A8.2] =====
+
+no rows selected
+
+
+===== D09 Roles críticos y de exportación masiva  [A5.18 / A8.12] =====
+
+GRANTEE                      GRANTED_ROLE                   ADM
+---------------------------- ------------------------------ ---
+DBA                          DATAPUMP_EXP_FULL_DATABASE     NO
+GSMUSER_ROLE                 DATAPUMP_EXP_FULL_DATABASE     NO
+DBA                          DATAPUMP_IMP_FULL_DATABASE     NO
+BASES1                       DBA                            NO
+DATAPUMP_EXP_FULL_DATABASE   EXP_FULL_DATABASE              NO
+DATAPUMP_IMP_FULL_DATABASE   EXP_FULL_DATABASE              NO
+DBA                          EXP_FULL_DATABASE              NO
+DATAPUMP_IMP_FULL_DATABASE   IMP_FULL_DATABASE              NO
+DBA                          IMP_FULL_DATABASE              NO
+PDBADMIN                     PDB_DBA                        YES
+AVTUNE_PKG_ROLE              SELECT_CATALOG_ROLE            NO
+DBA                          SELECT_CATALOG_ROLE            NO
+EXP_FULL_DATABASE            SELECT_CATALOG_ROLE            NO
+IMP_FULL_DATABASE            SELECT_CATALOG_ROLE            NO
+OEM_MONITOR                  SELECT_CATALOG_ROLE            NO
+OGG_SHARED_CAPTURE           SELECT_CATALOG_ROLE            NO
+SAGA_CONNECT_ROLE            SELECT_CATALOG_ROLE            NO
+XSTREAM_APPLY                SELECT_CATALOG_ROLE            NO
+XSTREAM_CAPTURE              SELECT_CATALOG_ROLE            NO
+
+19 rows selected.
+
+
+===== D10 Privilegios sobre objetos de esquemas de aplicación  [A5.15 / A8.3] =====
+
+no rows selected
+
+
+===== D11 Columnas con posibles datos personales o sensibles  [A5.12] =====
+
+OWNER                TABLE_NAME                     COLUMN_NAME                    DATA_TYPE        NUM_ROWS COMMENTS
+-------------------- ------------------------------ ------------------------------ -------------- ---------- ----------------------------------------
+BASES1               CONEXION_ORACLE                NOMBRE                         VARCHAR2                2
+BASES1               CONEXION_ORACLE                PASSWORD                       CLOB                    2
+BASES1               MONITOR_EVALUACION             NOMBRE_INSTANCIA               VARCHAR2                7
+BASES1               PARAMETROS                     NOMBRE                         VARCHAR2               10
+BASES1               PASSWORD_RESET_TOKENS          EMAIL                          VARCHAR2
+BASES1               PERSONAS                       NOMBRE                         VARCHAR2                9
+BASES1               PERSONAS                       SALARIO                        NUMBER                  9
+BASES1               PERSONAS_LOG                   NOMBRE                         VARCHAR2               14
+BASES1               PERSONAS_LOG                   SALARIO                        NUMBER                 14
+BASES1               USERS                          EMAIL                          VARCHAR2
+BASES1               USERS                          EMAIL_VERIFIED_AT              TIMESTAMP(6)
+BASES1               USERS                          PASSWORD                       VARCHAR2
+GESTOR_RMAN          BASES_DATOS                    NOMBRE                         VARCHAR2                2
+GESTOR_RMAN          BASES_DATOS                    NOMBRE_PDB                     VARCHAR2                2
+GESTOR_RMAN          ESTRATEGIAS                    NOMBRE                         VARCHAR2                5
+GESTOR_RMAN          ESTRATEGIA_COMPONENTES         NOMBRE_OBJETO                  VARCHAR2                5
+PI3                  CATEGORIAS                     NOMBRE                         VARCHAR2
+PI3                  CLIENTES                       NOMBRE                         VARCHAR2
+PI3                  PRODUCTOS                      NOMBRE                         VARCHAR2
+
+19 rows selected.
+
+
+===== D12 Tablespaces, cifrado y ubicación de los datos de aplicación  [A8.12] =====
+
+TABLESPACE_NAME      ENC STATUS    CONTENTS
+-------------------- --- --------- ---------------------
+IDX_FK               NO  ONLINE    PERMANENT
+IDX_PK               NO  ONLINE    PERMANENT
+ST1                  NO  ONLINE    PERMANENT
+ST2                  NO  ONLINE    PERMANENT
+ST3                  NO  ONLINE    PERMANENT
+ST4                  NO  ONLINE    PERMANENT
+ST5                  NO  ONLINE    PERMANENT
+SYSAUX               NO  ONLINE    PERMANENT
+SYSTEM               NO  ONLINE    PERMANENT
+TEMP                 NO  ONLINE    TEMPORARY
+UNDOTBS1             NO  ONLINE    UNDO
+USERS                NO  ONLINE    PERMANENT
+
+12 rows selected.
+
+
+no rows selected
+
+
+OWNER                TABLESPACE_NAME       SEGMENTOS         MB
+-------------------- -------------------- ---------- ----------
+AFIN                 USERS                        11       19.7
+BASES1               USERS                        32       26.1
+GESTOR_RMAN          USERS                        32        4.4
+
+3 rows selected.
+
+
+===== D13 Políticas de redacción y VPD  [A8.11 / A8.3] =====
+
+no rows selected
+
+
+no rows selected
+
+
+===== D14 Auditoría unificada  [A8.15 / A5.33] =====
+
+POLICY_NAME                    ENABLED_OPTION  ENTITY_NAME          SUC FAI
+------------------------------ --------------- -------------------- --- ---
+ORA$DICTIONARY_SENS_COL_ACCESS BY USER         ALL USERS            YES YES
+ORA_DV_DEFAULT_PROTECTION      BY USER         ALL USERS            YES YES
+ORA_DV_SCHEMA_CHANGES          BY USER         ALL USERS            YES YES
+ORA_LOGIN_LOGOUT               BY USER         ALL USERS            NO  YES
+ORA_SECURECONFIG               BY USER         ALL USERS            YES YES
+
+5 rows selected.
+
+
+EVENTOS_7_DIAS PRIMERO                                                                     ULTIMO
+-------------- --------------------------------------------------------------------------- ---------------------------------------------------------------------------
+             0
+
+1 row selected.
+
+
+no rows selected
+
+
+GRANTEE                      GRANTED_ROLE
+---------------------------- ------------------------------
+SYS                          AUDIT_ADMIN
+SYS                          AUDIT_VIEWER
+
+2 rows selected.
+
+
+PARAMETER_NAME                   PARAMETER_VALUE      AUDIT_TRAIL
+-------------------------------- -------------------- ----------------------------
+AUDIT FILE MAX AGE               5                    XML AUDIT TRAIL
+AUDIT FILE MAX AGE               5                    UNIFIED AUDIT TRAIL FILES
+AUDIT FILE MAX AGE               5                    OS AUDIT TRAIL
+AUDIT FILE MAX SIZE              10000                OS AUDIT TRAIL
+AUDIT FILE MAX SIZE              10000                XML AUDIT TRAIL
+AUDIT FILE MAX SIZE              10000                UNIFIED AUDIT TRAIL FILES
+DB AUDIT CLEAN BATCH SIZE        10000                STANDARD AUDIT TRAIL
+DB AUDIT CLEAN BATCH SIZE        10000                FGA AUDIT TRAIL
+DB AUDIT TABLESPACE              SYSAUX               FGA AUDIT TRAIL
+DB AUDIT TABLESPACE              SYSAUX               UNIFIED AUDIT TRAIL
+DB AUDIT TABLESPACE              SYSAUX               STANDARD AUDIT TRAIL
+OS FILE CLEAN BATCH SIZE         1000                 OS AUDIT TRAIL
+OS FILE CLEAN BATCH SIZE         1000                 XML AUDIT TRAIL
+
+13 rows selected.
+
+
+===== D15 Datos borrados en la papelera  [A8.10] =====
+
+OWNER                ORIGINAL_NAME                  TYPE                      DROPTIME
+-------------------- ------------------------------ ------------------------- -------------------
+BASES1               PARAMETROS_PK                  INDEX                     2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_BIR               TRIGGER                   2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_ADR               TRIGGER                   2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_AIR               TRIGGER                   2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_AUR               TRIGGER                   2026-05-26:19:14:43
+BASES1               PERSONAS_PK                    INDEX                     2026-05-26:19:14:43
+BASES1               PERSONAS                       TABLE                     2026-05-26:19:14:43
+BASES1               PERSONAS_LOG                   TABLE                     2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_AIUR_VISTA        TRIGGER                   2026-05-26:19:14:43
+BASES1               PARAMETROS                     TABLE                     2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_BUR               TRIGGER                   2026-05-26:19:14:43
+BASES1               PERSONAS_TRG_BUR               TRIGGER                   2026-05-26:19:08:52
+BASES1               PARAMETROS                     TABLE                     2026-05-26:19:08:52
+BASES1               PARAMETROS_PK                  INDEX                     2026-05-26:19:08:52
+BASES1               PERSONAS                       TABLE                     2026-05-26:19:08:52
+BASES1               PERSONAS_PK                    INDEX                     2026-05-26:19:08:52
+
+16 rows selected.
+
+
+===== D16 Parches aplicados  [A8.8] =====
+
+no rows selected
+
+
+===== D17 Ubicación de logs y trazas  [A8.15 / A5.33] =====
+
+NAME                                 VALUE
+------------------------------------ ----------------------------------------------------------------------
+ADR Home                             /opt/oracle/diag/rdbms/free/FREE
+Diag Trace                           /opt/oracle/diag/rdbms/free/FREE/trace
+Diag Alert                           /opt/oracle/diag/rdbms/free/FREE/alert
+
+3 rows selected.
+
+
+===== FIN DEL DIAGNÓSTICO =====

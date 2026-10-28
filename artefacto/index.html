@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}</style>
+<title>Marco de Confidencialidad DBA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cuaderno de auditoría — cabecera con ficha técnica, barra de navegación fija por componente, tablas trazables por ID */
+:root{
+  --bg:#f2f4f5; --surface:#ffffff; --ink:#15202a; --muted:#56636e; --line:#d4dbe0;
+  --accent:#0e5a61; --accent-soft:#dfeeef; --code-bg:#edf1f3;
+  --hi:#ad1f2c; --hi-bg:#f7e1e3; --mid:#9a5f00; --mid-bg:#faedd5; --lo:#2c7539; --lo-bg:#e1f0e3;
+  --pend:#4c5966; --pend-bg:#e6eaed;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1418; --surface:#151d23; --ink:#e2e8ec; --muted:#97a4ae; --line:#29343c;
+  --accent:#62b8be; --accent-soft:#15333a; --code-bg:#0f171c;
+  --hi:#ff8d96; --hi-bg:#3a1b1f; --mid:#efb84f; --mid-bg:#382a11; --lo:#82d08f; --lo-bg:#17301c;
+  --pend:#b3bec7; --pend-bg:#24303a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --surface:#151d23; --ink:#e2e8ec; --muted:#97a4ae; --line:#29343c;
+  --accent:#62b8be; --accent-soft:#15333a; --code-bg:#0f171c;
+  --hi:#ff8d96; --hi-bg:#3a1b1f; --mid:#efb84f; --mid-bg:#382a11; --lo:#82d08f; --lo-bg:#17301c;
+  --pend:#b3bec7; --pend-bg:#24303a; color-scheme:dark }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:26px;font-weight:700}
+h3{font-size:18px;font-weight:600}
+p{margin:0;max-width:72ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* Cabecera */
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:28px 24px;display:grid;gap:18px}
+.ficha{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.ficha div{background:var(--surface);padding:10px 12px;display:grid;gap:2px;min-width:0}
+.ficha dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ficha dd{margin:0;font-weight:500}
+.aviso{border:1px solid var(--mid);background:var(--mid-bg);padding:12px 14px;display:grid;gap:4px}
+.aviso strong{color:var(--mid)}
+
+/* Navegación */
+nav.secciones{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+nav.secciones .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:thin}
+nav.secciones a{flex:none;text-decoration:none;color:var(--ink);font-size:13px;font-weight:500;padding:6px 10px;border-radius:4px;white-space:nowrap}
+nav.secciones a span{font-family:var(--f-mono);color:var(--muted);margin-right:6px}
+nav.secciones a:hover{background:var(--accent-soft)}
+
+/* Trazabilidad */
+.traza{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:28px}
+.traza .item{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:grid;gap:2px}
+.traza .num{font-family:var(--f-display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.traza .lab{font-size:13px;color:var(--muted)}
+.traza .ok{color:var(--lo);font-size:12px;font-family:var(--f-mono)}
+.traza .bad{color:var(--hi);font-size:12px;font-family:var(--f-mono)}
+
+/* Secciones */
+section.comp{padding-block:44px 8px;display:grid;gap:16px;border-bottom:1px solid var(--line)}
+.comp-head{display:grid;gap:6px}
+.comp-head .eyebrow{color:var(--accent)}
+.lead{color:var(--muted);max-width:80ch}
+.req{font-size:13px;color:var(--muted)}
+.req b{color:var(--ink);font-weight:600}
+
+/* Tablas */
+.tabla{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 11px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--code-bg);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.id{font-family:var(--f-mono);font-weight:500;white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;text-align:center}
+.min{min-width:220px}
+.chip{display:inline-block;font-family:var(--f-mono);font-size:11.5px;padding:1px 6px;border:1px solid var(--line);border-radius:3px;margin:1px 2px 1px 0;white-space:nowrap;text-decoration:none;color:var(--ink)}
+a.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.comp{border-style:dashed}
+.nivel{display:inline-block;font-weight:600;font-size:12px;padding:2px 8px;border-radius:3px;white-space:nowrap}
+.nivel.alto{color:var(--hi);background:var(--hi-bg)}
+.nivel.medio{color:var(--mid);background:var(--mid-bg)}
+.nivel.bajo{color:var(--lo);background:var(--lo-bg)}
+.estado{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:3px;color:var(--pend);background:var(--pend-bg);white-space:nowrap}
+.nota{font-size:13px;color:var(--muted)}
+.estado.nocumple{color:var(--hi);background:var(--hi-bg)}
+.estado.parcial{color:var(--mid);background:var(--mid-bg)}
+.estado.cumple{color:var(--lo);background:var(--lo-bg)}
+.lista{margin:0;padding-left:18px;display:grid;gap:4px}
+.intro{background:var(--accent-soft);padding:14px 16px;display:grid;gap:6px;border-radius:4px}
+.intro strong{color:var(--accent);font-family:var(--f-display);font-size:17px}
+.simple{background:var(--accent-soft);padding:12px 16px;display:grid;gap:4px;border-radius:4px}
+.simple .eyebrow{color:var(--accent)}
+.simple p{max-width:85ch}
+.sub{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+.sub::before{content:"Técnico: ";font-weight:600}
+details.tecnico{margin-top:6px}
+details.tecnico > summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:500}
+details.tecnico[open] > summary{margin-bottom:6px}
+.psimple{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+ol.flujo{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;counter-reset:paso}
+.flujo li{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:grid;gap:4px;align-content:start;counter-increment:paso}
+.flujo li::before{content:counter(paso);font-family:var(--f-display);font-size:24px;font-weight:700;color:var(--accent);line-height:1}
+.flujo a{color:var(--ink);text-decoration:none}
+.flujo a:hover b{color:var(--accent)}
+.flujo span{font-size:13.5px;color:var(--muted)}
+dl.glosario{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0}
+.glosario div{background:var(--surface);padding:10px 14px;display:grid;gap:2px}
+.glosario dt{font-weight:600}
+.glosario dd{margin:0;color:var(--muted);font-size:14px}
+
+/* Mapa de calor */
+.riesgos-grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.riesgos-grid{grid-template-columns:minmax(0,1fr)}}
+.calor{display:grid;grid-template-columns:28px repeat(5,minmax(0,1fr));gap:3px;font-size:11px}
+.calor .ax{font-family:var(--f-mono);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.calor .cell{aspect-ratio:1;max-width:100%;border-radius:3px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:2px}
+.calor .cell.alto{background:var(--hi-bg)}
+.calor .cell.medio{background:var(--mid-bg)}
+.calor .cell.bajo{background:var(--lo-bg)}
+.calor .pin{font-family:var(--f-mono);font-size:10.5px;font-weight:500;background:var(--surface);color:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:0 3px}
+.calor-cap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:6px;padding-left:31px}
+.escala{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.escala .tabla table{font-size:12.5px}
+
+/* Filtros */
+.filtros{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filtros button{font:inherit;font-size:13px;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:4px;cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.filtros .cuenta{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* Pruebas */
+.prep{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.prep .bloque{background:var(--surface);border:1px solid var(--line);padding:14px;display:grid;gap:8px;min-width:0}
+.pruebas{display:grid;gap:10px}
+details.prueba{background:var(--surface);border:1px solid var(--line)}
+details.prueba > summary{list-style:none;cursor:pointer;padding:12px 14px;display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:baseline}
+details.prueba > summary::-webkit-details-marker{display:none}
+details.prueba > summary .pid{font-family:var(--f-mono);font-weight:500;color:var(--accent)}
+details.prueba > summary .ptit{font-weight:600}
+details.prueba > summary .ptipo{font-size:12px;color:var(--muted);white-space:nowrap}
+details.prueba[open] > summary{border-bottom:1px solid var(--line)}
+@media (max-width:560px){details.prueba > summary{grid-template-columns:56px minmax(0,1fr)} details.prueba > summary .ptipo{grid-column:2}}
+.pbody{padding:14px;display:grid;gap:14px}
+.pcampos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 18px}
+.pcampos div{display:grid;gap:2px;min-width:0}
+.pcampos dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.pcampos dd{margin:0;font-size:14px}
+.pcampos ol{margin:0;padding-left:18px}
+.codigo{position:relative;min-width:0}
+.codigo pre{margin:0;background:var(--code-bg);border:1px solid var(--line);padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:12.5px;line-height:1.5}
+.copiar{position:absolute;top:6px;right:6px;font:inherit;font-size:12px;padding:3px 8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:3px;cursor:pointer}
+.copiar:hover{border-color:var(--accent)}
+footer{padding-block:32px 48px;color:var(--muted);font-size:13px;display:grid;gap:8px}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">EIF402 · Administración de Bases de Datos · UNA · II Ciclo 2026</div>
+    <h1>Marco de controles ISO 27001:2022 para la confidencialidad del DBA</h1>
+    <dl class="ficha">
+      <div><dt>Autor</dt><dd>Joseph Elías Ulate Aguilar</dd></div>
+      <div><dt>Entorno</dt><dd>Oracle AI Database 26ai Free (23.26.1), Docker <span class="mono">oracle-eliasulate</span>, PDB <span class="mono">FREEPDB1</span></dd></div>
+      <div><dt>Marco de referencia</dt><dd>ISO/IEC 27001:2022 Anexo A · ISO/IEC 27002:2022 · Ley 8968</dd></div>
+      <div><dt>Metodología</dt><dd>PHVA: riesgos y controles (P), scripts (H), pruebas y matriz (V), plan de mejora (A)</dd></div>
+      <div><dt>Versión</dt><dd>Final · 27 oct 2026</dd></div>
+    </dl>
+    <div class="intro">
+      <strong>Qué es esta página</strong>
+      <p>Revisa qué tan protegida está la información confidencial de una base de datos Oracle, siguiendo la norma ISO 27001. Identifica qué podría salir mal y qué medidas lo evitarían, mide con un diagnóstico ejecutado sobre la base real cuáles de esas medidas existen y termina con un plan de mejora para aplicar las que faltan.</p>
+      <p class="nota">Entorno: el enunciado propone Oracle 21c XE; este trabajo usa Oracle 26ai Free en Docker. Los términos técnicos se explican en el <a href="#glosario">glosario</a>.</p>
+    </div>
+  </div>
+</header>
+
+<nav class="secciones" aria-label="Componentes del artefacto">
+  <div class="wrap">
+    <a href="#como-leer">Cómo leer</a>
+    <a href="#linea-base">Línea base</a>
+    <a href="#riesgos"><span>1</span>Riesgos</a>
+    <a href="#tareas"><span>2</span>Tareas DBA</a>
+    <a href="#mapeo"><span>3</span>Mapeo ISO</a>
+    <a href="#observables"><span>4</span>Controles observables</a>
+    <a href="#matriz"><span>5</span>Matriz</a>
+    <a href="#pruebas"><span>6</span>Pruebas</a>
+    <a href="#plan">Plan de mejora</a>
+    <a href="#glosario">Glosario</a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="traza" id="traza" aria-label="Comprobación de trazabilidad"></div>
+
+  <section class="comp" id="como-leer">
+    <div class="comp-head">
+      <div class="eyebrow">Guía rápida</div>
+      <h2>Cómo leer esta página</h2>
+      <p class="lead">El trabajo tiene seis partes que se encadenan: cada una usa los resultados de la anterior. La línea base, justo después de esta guía, muestra cómo está la base de datos hoy.</p>
+    </div>
+    <ol class="flujo">
+      <li><a href="#riesgos"><b>Riesgos</b></a><span>Qué podría hacer que un dato confidencial llegue a quien no debe.</span></li>
+      <li><a href="#tareas"><b>Tareas del DBA</b></a><span>En qué parte del trabajo diario del administrador aparece ese riesgo.</span></li>
+      <li><a href="#mapeo"><b>Controles ISO</b></a><span>Qué medida de la norma lo previene y cómo se aplica en Oracle.</span></li>
+      <li><a href="#observables"><b>Controles observables</b></a><span>Cómo un auditor comprueba, por su cuenta, que la medida existe.</span></li>
+      <li><a href="#matriz"><b>Matriz</b></a><span>La nota de 0 a 4 que tiene hoy cada medida.</span></li>
+      <li><a href="#pruebas"><b>Pruebas</b></a><span>Los scripts que generan las evidencias para esas notas.</span></li>
+      <li><a href="#plan"><b>Plan de mejora</b></a><span>Qué hacer, en qué orden, para subir la nota de cada medida.</span></li>
+    </ol>
+    <h3>Qué significan los códigos</h3>
+    <div class="tabla"><table>
+      <thead><tr><th>Código</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td class="id">R-CONF-01 a 05</td><td>Un riesgo de confidencialidad</td><td>R-CONF-03: datos legibles en archivos o respaldos</td></tr>
+        <tr><td class="id">T-01 a T-12</td><td>Una tarea del administrador (DBA)</td><td>T-03: autenticación</td></tr>
+        <tr><td class="id">A5.xx / A8.xx</td><td>Un control de la norma ISO 27001. A5 son medidas de organización; A8, medidas tecnológicas</td><td>A8.11: enmascaramiento de datos</td></tr>
+        <tr><td class="id">C-01 a C-15</td><td>Una comprobación que puede hacer un auditor</td><td>C-11: la cédula aparece oculta</td></tr>
+        <tr><td class="id">M-01 a M-18</td><td>Una fila de la matriz de evaluación</td><td>M-12: cifrado de archivos</td></tr>
+        <tr><td class="id">PT-00 a PT-17</td><td>Una prueba técnica con su script</td><td>PT-05: bloqueo por intentos fallidos</td></tr>
+        <tr><td class="id">D00 a D17</td><td>Un bloque del diagnóstico inicial; cada uno es una parte del archivo de evidencia</td><td>D09: quién tiene permisos de administrador</td></tr>
+        <tr><td class="id">H-01 a H-13</td><td>Un hallazgo del diagnóstico inicial</td><td>H-04: no hay cifrado</td></tr>
+        <tr><td class="id">V-01 a V-03</td><td>Una verificación complementaria que usa el plan de mejora</td><td>V-02: revisar FREEPDB2</td></tr>
+      </tbody>
+    </table></div>
+    <p class="nota">Los recuadros con código, como <a class="chip" href="#riesgos">R-CONF-01</a>, son enlaces a la sección donde se explican. Los controles con borde punteado son propuestas propias, fuera de la lista del profesor.</p>
+  </section>
+
+  <section class="comp" id="linea-base">
+    <div class="comp-head">
+      <div class="eyebrow">Verificar · pruebas ejecutadas</div>
+      <h2>Línea base de la base de datos</h2>
+      <p class="lead">Ninguna de las 18 filas de la matriz llega a nivel 2: la base funciona con la configuración por defecto de Oracle y todavía no hay controles de confidencialidad diseñados por el DBA. Diagnóstico de solo lectura ejecutado el 20 oct 2026 a las 23:07, hora de Costa Rica (05:07 UTC del 21 oct en la evidencia), sobre CDB$ROOT y FREEPDB1 de Oracle AI Database 26ai Free 23.26.1. Se repitió el 22 oct 2026 con resultados idénticos.</p>
+      <p class="req"><b>Evidencia:</b> <code>evidencias/D-linea-base.txt</code> (bloques D00-D17) y <code>evidencias/D-red.txt</code> (puertos, listener y sqlnet.ora); segunda corrida en <code>evidencias/2026-10-22_1132/</code>. Los niveles siguen la escala 0-4 del componente 5.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Antes de cambiar nada, se ejecutó una revisión de solo lectura para ver cómo está protegida la base hoy. Resultado: funciona con la configuración que trae Oracle de fábrica y ninguna medida de confidencialidad se ha configurado a propósito. Es el punto de partida: el plan de mejora, al final de la página, indica qué aplicar para subir cada nota.</p></div>
+    <div class="traza" id="dist" aria-label="Distribución de niveles de la matriz"></div>
+    <h3>Hallazgos, de mayor a menor gravedad</h3>
+    <div class="tabla"><table>
+      <thead><tr><th>ID</th><th>Gravedad</th><th>Qué se encontró</th><th>Por qué importa</th><th>Evidencia</th><th>Riesgo</th><th>Control</th></tr></thead>
+      <tbody id="tb-hallazgos"></tbody>
+    </table></div>
+    <div class="prep">
+      <div class="bloque">
+        <h3>Lo que ya está bien</h3>
+        <ul class="lista">
+          <li>Solo SYS figura en el archivo de contraseñas con SYSDBA (D01).</li>
+          <li>Ninguna cuenta tiene contraseña por defecto (D06).</li>
+          <li>Ningún privilegio ANY otorgado directamente a cuentas propias (D08).</li>
+          <li>Ningún grant entre esquemas ni a PUBLIC (D10).</li>
+          <li>Auditoría unificada activa, con SYS como único auditor (D04, D14).</li>
+          <li>Banner de versión oculto, <code>sql92_security</code> activo y corte tras 3 intentos fallidos por conexión (D04).</li>
+          <li>Base en modo ARCHIVELOG con respaldos RMAN de octubre (D00, D03).</li>
+        </ul>
+      </div>
+      <div class="bloque">
+        <h3>Resultado reproducible</h3>
+        <p>El diagnóstico se ejecutó el 20 oct y se repitió el 22 oct con <code>demostracion_diagnostico.ps1</code>. Las dos salidas solo difieren en la fecha y hora de ejecución: los 18 bloques dan los mismos resultados.</p>
+        <p class="nota">El script solo hace consultas; puede ejecutarse en cualquier momento sin modificar la base.</p>
+      </div>
+    </div>
+    <h3>Verificaciones complementarias</h3>
+    <p class="nota">Tres consultas adicionales que el plan de mejora usa en las acciones 2, 3 y 13.</p>
+    <div class="prep">
+      <div class="bloque">
+        <h3>V-01 · Contraseñas guardadas</h3>
+        <p>Confirma si CONEXION_ORACLE.PASSWORD y USERS.PASSWORD guardan hashes, valores cifrados o texto plano. Solo muestra longitud y formato, nunca la contraseña. Ejecutar como SYS en SQL Developer.</p>
+        <details class="tecnico"><summary>Ver script</summary><div class="codigo"><button class="copiar" type="button" data-copiar="v01">Copiar</button><pre id="v01"></pre></div></details>
+      </div>
+      <div class="bloque">
+        <h3>V-02 · Diagnóstico de FREEPDB2</h3>
+        <p>Repite el diagnóstico sobre FREEPDB2 para saber si es una copia de FREEPDB1. La primera línea corrige los acentos de la salida. Ejecutar en PowerShell, en la carpeta del proyecto.</p>
+        <details class="tecnico"><summary>Ver script</summary><div class="codigo"><button class="copiar" type="button" data-copiar="v02">Copiar</button><pre id="v02"></pre></div></details>
+      </div>
+      <div class="bloque">
+        <h3>V-03 · Exposición en Windows</h3>
+        <p>Muestra si Windows escucha 1521 y 5500 en todas sus interfaces. Si aparece 0.0.0.0, otra máquina de la misma red puede intentar conectarse, salvo que el firewall lo impida.</p>
+        <details class="tecnico"><summary>Ver script</summary><div class="codigo"><button class="copiar" type="button" data-copiar="v03">Copiar</button><pre id="v03"></pre></div></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="comp" id="riesgos">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 1 · Planificar</div>
+      <h2>Riesgos de confidencialidad R-CONF</h2>
+      <p class="lead">Cinco escenarios en los que datos de la base Oracle pueden llegar a quien no debe verlos. Cada uno se valora con probabilidad e impacto de 1 a 5; el nivel es el producto P × I.</p>
+      <p class="req"><b>Exigido:</b> al menos 5 riesgos R-CONF con impacto y probabilidad (§3 y §6.1). <b>Propio:</b> las escalas, porque el PDF no las define.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Un riesgo es algo que podría hacer que un dato confidencial (un salario, una contraseña, un correo) lo vea quien no debe. Cada riesgo recibe una nota de probabilidad, qué tan fácil es que pase, y de impacto, qué tan grave sería, de 1 a 5. Multiplicadas dan su nivel: mientras más arriba y a la derecha en el cuadro, más urgente.</p></div>
+    <div class="riesgos-grid">
+      <div>
+        <div class="calor" id="calor" role="img" aria-label="Mapa de calor de riesgos: probabilidad en vertical, impacto en horizontal"></div>
+        <div class="calor-cap"><span>Impacto 1</span><span>Impacto 5</span></div>
+      </div>
+      <div class="escala">
+        <div class="tabla"><table>
+          <thead><tr><th>P</th><th>Probabilidad</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Rara: requiere varias fallas simultáneas</td></tr>
+            <tr><td class="num">2</td><td>Improbable: requiere un error poco común</td></tr>
+            <tr><td class="num">3</td><td>Posible: la condición existe en entornos típicos</td></tr>
+            <tr><td class="num">4</td><td>Probable: la condición existe por defecto o por práctica común</td></tr>
+            <tr><td class="num">5</td><td>Casi segura: ya ocurre o es trivial de explotar</td></tr>
+          </tbody></table></div>
+        <div class="tabla"><table>
+          <thead><tr><th>I</th><th>Impacto</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Insignificante: datos públicos</td></tr>
+            <tr><td class="num">2</td><td>Menor: datos internos sin datos personales</td></tr>
+            <tr><td class="num">3</td><td>Moderado: pocos registros personales</td></tr>
+            <tr><td class="num">4</td><td>Mayor: muchos registros personales o datos económicos</td></tr>
+            <tr><td class="num">5</td><td>Crítico: exposición masiva de datos personales (Ley 8968)</td></tr>
+          </tbody></table></div>
+        <p class="nota">Nivel: <span class="nivel bajo">Bajo 1-6</span> <span class="nivel medio">Medio 8-12</span> <span class="nivel alto">Alto 15-25</span></p>
+      </div>
+    </div>
+    <div class="tabla"><table>
+      <thead><tr><th>ID</th><th>Riesgo</th><th>Por qué puede pasar</th><th>Activo</th><th>P</th><th>I</th><th>Nivel</th><th>Tareas</th><th>Controles</th></tr></thead>
+      <tbody id="tb-riesgos"></tbody>
+    </table></div>
+  </section>
+
+  <section class="comp" id="tareas">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 2 · Planificar</div>
+      <h2>Tareas críticas del DBA</h2>
+      <p class="lead">Las doce actividades que nombra el enunciado, con los objetos de Oracle que tocan y los riesgos que crean o controlan.</p>
+      <p class="req"><b>Exigido:</b> al menos 12 tareas (§3) presentadas en tabla (§6.2).</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Son las actividades normales de un administrador de bases de datos. En cada una puede abrir o cerrar la puerta a una fuga de datos; por eso cada tarea se conecta con los riesgos que afecta.</p></div>
+    <div class="tabla"><table>
+      <thead><tr><th>ID</th><th>Tarea</th><th>Qué hace el DBA</th><th>Frecuencia</th><th>Objetos Oracle</th><th>Riesgos</th></tr></thead>
+      <tbody id="tb-tareas"></tbody>
+    </table></div>
+  </section>
+
+  <section class="comp" id="mapeo">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 3 · Planificar</div>
+      <h2>Mapeo de controles ISO, implementación y evidencia</h2>
+      <p class="lead">Los 15 controles del Anexo A que pide el enunciado. La justificación es una paráfrasis propia del propósito de cada control; no reproduce el texto de la norma. La evidencia observable es una consulta o un archivo que cualquiera puede revisar.</p>
+      <p class="req"><b>Exigido:</b> 15 controles seleccionados y justificados (§3), con implementación sugerida y evidencia observable (§6.3). Los controles con borde punteado son <b>complementarios propios</b>, fuera de la lista del profesor.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>La norma ISO 27001 trae una lista de medidas de seguridad llamadas controles. Esta tabla toma las que pide el profesor y explica, para cada una, para qué sirve y cómo se aplica en Oracle. La consulta que lo comprueba está oculta en «Ver consulta».</p></div>
+    <div class="tabla"><table>
+      <thead><tr><th>Control</th><th>Nombre (2022)</th><th>Para qué sirve</th><th>Tareas</th><th>Riesgos</th><th>Cómo se aplica</th><th>Cómo se comprueba</th></tr></thead>
+      <tbody id="tb-mapeo"></tbody>
+    </table></div>
+  </section>
+
+  <section class="comp" id="observables">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 4 · Verificar</div>
+      <h2>Quince controles observables por un auditor externo</h2>
+      <p class="lead">Uno por cada control ISO exigido. Cada uno dice qué ve el auditor, con qué prueba lo comprueba y qué resultado lo da por aceptado, sin depender de la palabra del DBA.</p>
+      <p class="req"><b>Exigido:</b> lista de 15 controles observables (§6.4). <b>Interpretación propia:</b> la correspondencia uno a uno con los 15 controles ISO.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Un control observable es una comprobación que otra persona puede hacer sin creerle al administrador: ejecuta algo y mira el resultado. Si el resultado coincide con el criterio de aceptación, la medida existe.</p></div>
+    <div class="tabla"><table>
+      <thead><tr><th>ID</th><th>Control ISO</th><th>Qué observa el auditor</th><th>Cómo lo verifica</th><th>Criterio de aceptación</th></tr></thead>
+      <tbody id="tb-obs"></tbody>
+    </table></div>
+  </section>
+
+  <section class="comp" id="matriz">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 5 · Verificar y actuar</div>
+      <h2>Matriz de evaluación</h2>
+      <p class="lead">Cada fila cruza una tarea, un riesgo y un control. El nivel actual es la línea base medida el 20 oct 2026; se vuelve a medir con la prueba PT indicada cuando el control esté implementado.</p>
+      <p class="req"><b>Exigido:</b> columnas Tarea, Riesgo, Control, Criterio 0-4, Evidencia y Estado (Cumple / No cumple / Parcial) (§3 y §6.5). <b>Propio:</b> la definición de los niveles, porque el PDF no la da. La columna Evidencia cita el bloque del diagnóstico y la prueba PT que confirmará el nivel cuando se aplique la acción del plan de mejora.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Es la tabla de notas. Cada fila combina una tarea, un riesgo y un control, y recibe un nivel de 0 a 4 según la evidencia: 0 y 1 significan No cumple, 2 es Parcial, y 3 y 4 son Cumple. Todas las filas están en 0 o 1 porque la base usa la configuración de fábrica; el plan de mejora indica qué hacer para subir cada una.</p></div>
+    <div class="tabla"><table>
+      <thead><tr><th>Nivel</th><th>Nombre</th><th>Qué tiene que existir</th><th>Evidencia mínima</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0</td><td>Inexistente</td><td>Nada trata el riesgo</td><td>Salida que muestra la ausencia</td><td>No cumple</td></tr>
+        <tr><td class="num">1</td><td>Inicial</td><td>Algo existe, ad hoc o incompleto</td><td>Salida que muestra el control a medias</td><td>No cumple</td></tr>
+        <tr><td class="num">2</td><td>Diseñado</td><td>Definido y documentado; implementación parcial o sin probar</td><td>Diseño + configuración parcial</td><td>Parcial</td></tr>
+        <tr><td class="num">3</td><td>Implementado y verificado</td><td>Configurado y una prueba demuestra que funciona</td><td>Salida de prueba positiva y negativa, con fecha y contenedor</td><td>Cumple</td></tr>
+        <tr><td class="num">4</td><td>Gestionado</td><td>Además se revisa o monitorea de forma periódica</td><td>Evidencia de revisión recurrente</td><td>Cumple</td></tr>
+      </tbody></table></div>
+    <div class="filtros" role="group" aria-label="Filtrar la matriz por riesgo" id="filtros"></div>
+    <div class="tabla"><table>
+      <thead><tr><th>Fila</th><th>Tarea</th><th>Riesgo</th><th>Control</th><th>Criterio 0-4</th><th>Evidencia</th><th>Estado</th><th>Qué se encontró</th></tr></thead>
+      <tbody id="tb-matriz"></tbody>
+    </table></div>
+  </section>
+
+  <section class="comp" id="pruebas">
+    <div class="comp-head">
+      <div class="eyebrow">Componente 6 · Hacer y verificar</div>
+      <h2>Batería de pruebas y scripts de verificación</h2>
+      <p class="lead">Diecisiete pruebas para Oracle 26ai Free en Docker que comprueban cada control una vez aplicado. Forman la batería propuesta del plan de mejora; la prueba ejecutada en este trabajo es el diagnóstico de la línea base. Cada salida se guarda como evidencia EV con el mismo número que la prueba.</p>
+      <p class="req"><b>Exigido:</b> ID, Tipo, Procedimiento, Resultado esperado y Herramienta (§6.6), scripts de verificación obligatorios (§6) y ejecución real (§3). <b>Propio:</b> las columnas Riesgo, Control y Evidencia, para trazabilidad.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Cada prueba es un script que se ejecuta en la base para demostrar que una medida funciona; por ejemplo, intentar leer una tabla sin permiso y comprobar que Oracle lo impide. Están listas para ejecutarse a medida que se aplique cada acción del plan de mejora. Debajo del nombre de cada prueba se explica qué demuestra; el código está dentro, al abrirla.</p></div>
+    <div class="prep">
+      <div class="bloque">
+        <h3>Conexión</h3>
+        <p>SQL Developer en Windows: usuario <code>SYS</code> como SYSDBA, host <code>localhost</code>, puerto <code>1521</code>, servicio <code>FREEPDB1</code>. Para comandos que exigen la raíz (TDE, clonación), conéctate al servicio <code>FREE</code> o usa <code>ALTER SESSION SET CONTAINER = CDB$ROOT</code>.</p>
+        <p class="nota">Desde el contenedor: <code>docker exec -it oracle-eliasulate sqlplus / as sysdba</code> y luego <code>ALTER SESSION SET CONTAINER = FREEPDB1;</code></p>
+      </div>
+      <div class="bloque">
+        <h3>Evidencias</h3>
+        <p>Si corres los scripts desde SQL Developer (F5, «Ejecutar script»), el <code>SPOOL</code> escribe en tu equipo Windows; usa una ruta completa a la carpeta <code>evidencias</code> del repositorio. Si los corres con sqlplus dentro del contenedor, el archivo queda en el contenedor y hay que sacarlo con <code>docker cp</code>.</p>
+      </div>
+      <div class="bloque">
+        <h3>Datos de prueba</h3>
+        <p>Solo datos ficticios. El script de preparación crea <code>APP_OWNER.CLIENTES</code> y dos usuarios de prueba. Ejecútalo antes de PT-01.</p>
+      </div>
+    </div>
+    <details class="tecnico"><summary>Ver script de datos de prueba</summary>
+    <div class="codigo">
+      <button class="copiar" type="button" data-copiar="prep-sql">Copiar</button>
+      <pre id="prep-sql"></pre>
+    </div>
+    </details>
+    <div class="pruebas" id="lista-pruebas"></div>
+  </section>
+
+  <section class="comp" id="plan">
+    <div class="comp-head">
+      <div class="eyebrow">Actuar · cierre del ciclo PHVA</div>
+      <h2>Plan de mejora</h2>
+      <p class="lead">Trece acciones, una por hallazgo, ordenadas por prioridad. Cada una indica qué filas de la matriz mejora y con qué prueba se comprueba; al aplicarla y pasar su prueba, esas filas pueden subir a nivel 3 (Cumple).</p>
+      <p class="req"><b>Exigido:</b> metodología PHVA (§1 y §7); esta es la fase Actuar. <b>Propio:</b> el orden de prioridad, basado en la gravedad de cada hallazgo.</p>
+    </div>
+    <div class="simple"><span class="eyebrow">En palabras simples</span><p>Es la lista de correcciones para lo que encontró el diagnóstico. Primero van las que protegen más datos. Las pruebas de la batería sirven para demostrar que cada corrección quedó bien hecha.</p></div>
+    <div class="tabla"><table>
+      <thead><tr><th>#</th><th>Prioridad</th><th>Acción</th><th>Resuelve</th><th>Control</th><th>Matriz</th><th>Se comprueba con</th></tr></thead>
+      <tbody id="tb-plan"></tbody>
+    </table></div>
+    <div class="prep">
+      <div class="bloque">
+        <h3>Antes de aplicar cambios</h3>
+        <p>Las pruebas PT usan un esquema de demostración, APP_OWNER, con datos ficticios, para no alterar los proyectos del curso que dependen de BASES1 y GESTOR_RMAN.</p>
+        <p>Los cambios sobre cuentas y tablas reales (quitar el rol DBA a BASES1, purgar la papelera, cerrar puertos) deben coordinarse con esas aplicaciones, porque pueden dejarlas sin acceso.</p>
+        <p class="nota">Antes de cualquier cambio, respaldar el volumen o exportar FREEPDB1.</p>
+      </div>
+      <div class="bloque">
+        <h3>Cómo medir el avance</h3>
+        <p>El diagnóstico se repite con <code>demostracion_diagnostico.ps1</code>, que guarda cada corrida en una carpeta con fecha. Comparar la corrida nueva con la línea base muestra qué filas de la matriz subieron de nivel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="comp" id="glosario">
+    <div class="comp-head">
+      <div class="eyebrow">Referencia</div>
+      <h2>Glosario</h2>
+      <p class="lead">Los términos técnicos que aparecen en la página, explicados en una o dos líneas.</p>
+    </div>
+    <dl class="glosario">
+      <div><dt>Confidencialidad</dt><dd>Que solo quien está autorizado pueda ver un dato.</dd></div>
+      <div><dt>DBA</dt><dd>Administrador de bases de datos: quien instala, configura, respalda y protege la base.</dd></div>
+      <div><dt>ISO/IEC 27001, Anexo A</dt><dd>Norma internacional de seguridad de la información. Su Anexo A lista 93 medidas (controles); el profesor eligió 15.</dd></div>
+      <div><dt>ISO/IEC 27002</dt><dd>Guía que explica cómo aplicar cada control de la ISO 27001.</dd></div>
+      <div><dt>Ley 8968</dt><dd>Ley costarricense de protección de datos personales. Obliga a guardar confidencialidad y a borrar datos cuando corresponde.</dd></div>
+      <div><dt>PHVA</dt><dd>Planificar, Hacer, Verificar, Actuar: el ciclo de mejora que sigue el proyecto.</dd></div>
+      <div><dt>CDB y PDB</dt><dd>Oracle guarda varias bases «enchufables» (PDB) dentro de un contenedor (CDB). FREEPDB1 es la base de trabajo; FREEPDB2 es otra base del mismo contenedor.</dd></div>
+      <div><dt>SYS y SYSDBA</dt><dd>La cuenta y el permiso con control total sobre Oracle.</dd></div>
+      <div><dt>Rol DBA</dt><dd>Paquete de permisos de administrador completo: quien lo tiene puede leer y cambiar casi todo.</dd></div>
+      <div><dt>Privilegio ANY</dt><dd>Permiso para actuar sobre objetos de cualquier usuario; por ejemplo, SELECT ANY TABLE permite leer cualquier tabla.</dd></div>
+      <div><dt>Grant</dt><dd>La acción de dar un permiso a un usuario o a un rol.</dd></div>
+      <div><dt>Perfil de contraseñas</dt><dd>Reglas de una cuenta: cuántos intentos fallidos se permiten, cada cuánto vence la contraseña, qué tan compleja debe ser.</dd></div>
+      <div><dt>Verificador 11G / 12C</dt><dd>Formato en que Oracle guarda la contraseña cifrada. El 11G es antiguo y más débil que el 12C.</dd></div>
+      <div><dt>TDE (cifrado transparente)</dt><dd>Cifra los archivos de la base. Si alguien los copia, no puede leerlos sin la llave.</dd></div>
+      <div><dt>Keystore</dt><dd>Archivo donde Oracle guarda la llave que usa TDE.</dd></div>
+      <div><dt>Tablespace y datafile</dt><dd>Un tablespace es un espacio lógico donde se guardan tablas; un datafile es el archivo físico que lo contiene.</dd></div>
+      <div><dt>Data Redaction</dt><dd>Oculta el valor de una columna en el resultado de una consulta (por ejemplo, la cédula aparece en blanco), sin cambiar el dato guardado.</dd></div>
+      <div><dt>VPD (base de datos privada virtual)</dt><dd>Filtro automático que hace que cada usuario vea solo las filas que le corresponden.</dd></div>
+      <div><dt>Auditoría unificada</dt><dd>Registro de Oracle de quién hizo qué y cuándo.</dd></div>
+      <div><dt>RMAN</dt><dd>Herramienta de Oracle para hacer respaldos y restaurarlos.</dd></div>
+      <div><dt>ARCHIVELOG</dt><dd>Modo en que Oracle guarda el historial de cambios, lo que permite recuperar la base a un momento exacto.</dd></div>
+      <div><dt>Data Pump</dt><dd>Herramienta de Oracle para exportar datos a archivos.</dd></div>
+      <div><dt>Papelera (recycle bin)</dt><dd>Lugar donde quedan las tablas borradas hasta que alguien las purga; mientras estén ahí, se pueden recuperar.</dd></div>
+      <div><dt>Listener y puertos 1521 / 5500</dt><dd>El listener recibe las conexiones de red a Oracle. El puerto 1521 es la entrada para consultas y el 5500 la consola web.</dd></div>
+      <div><dt>sqlnet.ora</dt><dd>Archivo de configuración de red de Oracle; ahí se activa el cifrado de la comunicación.</dd></div>
+      <div><dt>Línea base</dt><dd>La medición inicial, hecha antes de aplicar las medidas, para compararla después.</dd></div>
+      <div><dt>Evidencia</dt><dd>Archivo con el resultado de una consulta o prueba, con fecha, que demuestra algo sin depender de la palabra de nadie.</dd></div>
+      <div><dt>Nivel de madurez 0-4</dt><dd>Nota de cada medida: 0 no existe, 1 existe por defecto o a medias, 2 está diseñada, 3 funciona y está probada, 4 además se revisa periódicamente.</dd></div>
+    </dl>
+  </section>
+
+  <footer>
+    <p>Fuentes técnicas usadas en este trabajo: <a href="https://www.oracle.com/database/free/download">descarga de Oracle Database Free</a> (versión vigente 23.26.3, consultada el 20 oct 2026), página oficial de Oracle Database XE, tabla de licencias de Oracle XE 18c, ISO/IEC 27001:2022 y 27002:2022 (títulos de control), Ley 8968 y Decreto 37554-JP. La disponibilidad de cada función en 26ai Free se confirma con la prueba PT-00 antes de usarla.</p>
+    <p>Las justificaciones de control son paráfrasis; no reproducen el texto de la norma.</p>
+  </footer>
+</main>
+
+<script>
+const RIESGOS = [
+  {id:"R-CONF-01", nombre:"Un usuario de aplicación o un operador lee datos personales que no necesita, por privilegios excesivos o abuso de una cuenta privilegiada", causa:"BASES1 tiene el rol DBA; PDBADMIN tiene PDB_DBA con opción de administración; no hay redacción ni VPD (D09, D13)", activo:"BASES1.PERSONAS y PERSONAS_LOG (nombre, salario), BASES1.USERS (correo, hash de clave), BASES1.CONEXION_ORACLE (contraseñas de conexión)", p:4, i:5, tareas:["T-01","T-02","T-05","T-07","T-08","T-11"], controles:["A8.2","A5.15","A5.18","A8.3","A8.11","A8.15","A5.33"]},
+  {id:"R-CONF-02", nombre:"Un tercero entra a la base con una contraseña débil, por defecto o adivinada", causa:"Las 5 cuentas usan el perfil DEFAULT: sin función de verificación, reutilización ilimitada, bloqueo a los 10 intentos; verificadores 11G; cuentas sin uso abiertas (D05, D07)", activo:"Cuentas AFIN, BASES1, GESTOR_RMAN, PDBADMIN y PI3 de FREEPDB1", p:3, i:5, tareas:["T-01","T-03"], controles:["A5.16","A5.17","A8.5"]},
+  {id:"R-CONF-03", nombre:"Alguien con acceso al volumen de Docker o a un respaldo lee los datos sin pasar por la base", causa:"Sin TDE (keystore NOT_AVAILABLE); las 10 piezas RMAN recientes tienen ENCRYPTED = NO; tablas con salarios en la papelera desde mayo (D02, D03, D15)", activo:"Tablespace USERS de FREEPDB1 (≈50 MB de AFIN, BASES1 y GESTOR_RMAN), piezas RMAN en /opt/oracle/oradata, papelera de BASES1", p:3, i:5, tareas:["T-04","T-06","T-10"], controles:["A8.12","A8.13","A8.10"]},
+  {id:"R-CONF-04", nombre:"Datos personales reales terminan en un clon de prueba o en una exportación fuera de producción", causa:"FREEPDB2 abierto y sin analizar; BASES1 hereda los roles de exportación por el rol DBA; ninguna columna clasificada (D00, D09, D11)", activo:"FREEPDB2, archivos de Data Pump", p:3, i:4, tareas:["T-05","T-06","T-12"], controles:["A8.11","A8.12","A5.12"]},
+  {id:"R-CONF-05", nombre:"El tráfico entre cliente y base viaja en claro o el listener queda expuesto a otras máquinas", causa:"Puertos 1521 y 5500 publicados en 0.0.0.0 y ::; sqlnet.ora sin cifrado ni filtro de nodos (D-red)", activo:"Sesiones SQL*Net y EM Express hacia el contenedor", p:4, i:4, tareas:["T-09"], controles:["A8.20","A8.5"]}
+];
+
+const TAREAS = [
+  {id:"T-01", tarea:"Gestión de usuarios", que:"Crea, bloquea y elimina cuentas nominales; asigna perfiles", frec:"Por solicitud; revisión mensual", obj:"CREATE/ALTER/DROP USER, DBA_USERS", r:["R-CONF-01","R-CONF-02"]},
+  {id:"T-02", tarea:"Gestión de privilegios y roles", que:"Otorga y revoca privilegios mínimos mediante roles", frec:"Por solicitud; revisión mensual", obj:"GRANT/REVOKE, DBA_SYS_PRIVS, DBA_ROLE_PRIVS, DBA_TAB_PRIVS", r:["R-CONF-01"]},
+  {id:"T-03", tarea:"Autenticación", que:"Define reglas de contraseña y bloqueo; elimina claves por defecto", frec:"Al crear cuentas; revisión trimestral", obj:"CREATE PROFILE, DBA_PROFILES, DBA_USERS_WITH_DEFPWD", r:["R-CONF-02"]},
+  {id:"T-04", tarea:"Cifrado TDE", que:"Configura el keystore y cifra tablespaces con datos sensibles", frec:"Al configurar; rotación de clave anual", obj:"WALLET_ROOT, ADMINISTER KEY MANAGEMENT, V$ENCRYPTION_WALLET", r:["R-CONF-03"]},
+  {id:"T-05", tarea:"Masking y redacción", que:"Oculta columnas y filtra filas según el usuario", frec:"Al crear objetos sensibles", obj:"DBMS_REDACT, DBMS_RLS, REDACTION_POLICIES, DBA_POLICIES", r:["R-CONF-01","R-CONF-04"]},
+  {id:"T-06", tarea:"Respaldos y exportaciones", que:"Respalda con RMAN cifrado, valida restauraciones y controla quién exporta", frec:"Diaria (respaldo); mensual (validación)", obj:"RMAN, V$BACKUP_PIECE, roles DATAPUMP_*", r:["R-CONF-03","R-CONF-04"]},
+  {id:"T-07", tarea:"Auditoría", que:"Define políticas de auditoría unificada y revisa el rastro", frec:"Continua; revisión semanal", obj:"CREATE AUDIT POLICY, UNIFIED_AUDIT_TRAIL", r:["R-CONF-01"]},
+  {id:"T-08", tarea:"Parcheo", que:"Mantiene el motor en la versión vigente; en Free equivale a actualizar la imagen", frec:"En cada versión publicada", obj:"V$VERSION, DBA_REGISTRY_SQLPATCH, imagen Docker", r:["R-CONF-01"]},
+  {id:"T-09", tarea:"Listener y red", que:"Limita desde dónde se conecta y cifra la sesión", frec:"Al configurar; revisión trimestral", obj:"listener.ora, sqlnet.ora, puerto publicado del contenedor", r:["R-CONF-05"]},
+  {id:"T-10", tarea:"Eliminación segura", que:"Suprime datos que ya no se necesitan y controla copias residuales", frec:"Por solicitud del titular; según retención", obj:"DELETE, DROP ... PURGE, DBA_RECYCLEBIN, UNDO_RETENTION", r:["R-CONF-03"]},
+  {id:"T-11", tarea:"Logs del motor", que:"Protege y revisa alert log, trazas y rastro de auditoría", frec:"Semanal", obj:"V$DIAG_INFO, roles AUDIT_ADMIN / AUDIT_VIEWER", r:["R-CONF-01"]},
+  {id:"T-12", tarea:"Clones DEV/TEST", que:"Crea copias para pruebas con datos enmascarados", frec:"Por cada clon", obj:"CREATE PLUGGABLE DATABASE ... FROM, scripts de enmascaramiento", r:["R-CONF-04"]}
+];
+
+const MAPEO = [
+  {c:"A5.12", n:"Clasificación de la información", j:"Sin saber qué columnas son sensibles no se puede decidir qué cifrar, redactar o enmascarar.", t:["T-05","T-12"], r:["R-CONF-04"], imp:"Etiquetar columnas con COMMENT ON COLUMN usando un esquema propio (RESTRINGIDO, CONFIDENCIAL, INTERNO)", ev:"SELECT column_name, comments FROM dba_col_comments WHERE owner = 'APP_OWNER';", p:"PT-15"},
+  {c:"A5.15", n:"Control de acceso", j:"El acceso a datos debe responder a una necesidad definida, no a la disponibilidad técnica.", t:["T-01","T-02"], r:["R-CONF-01"], imp:"Roles por función; ningún acceso directo a tablas sin grant explícito", ev:"Intento de SELECT sin grant que devuelve ORA-00942", p:"PT-03"},
+  {c:"A5.16", n:"Gestión de identidades", j:"Cada acceso debe atribuirse a una persona; las cuentas sin dueño o compartidas impiden la rendición de cuentas.", t:["T-01"], r:["R-CONF-02"], imp:"Cuentas nominales; bloqueo de cuentas sin uso; inventario de cuentas aprobado", ev:"SELECT username, account_status, last_login FROM dba_users WHERE oracle_maintained = 'N';", p:"PT-04"},
+  {c:"A5.17", n:"Información de autenticación", j:"Las contraseñas son el secreto que protege a todas las cuentas; deben cumplir reglas y no quedar por defecto.", t:["T-03"], r:["R-CONF-02"], imp:"Perfil PERFIL_APP con vida, reutilización y complejidad de clave", ev:"SELECT * FROM dba_users_with_defpwd; y DBA_PROFILES del perfil", p:"PT-04"},
+  {c:"A5.18", n:"Derechos de acceso", j:"Los derechos se otorgan, revisan y retiran; sin revisión se acumulan.", t:["T-01","T-02"], r:["R-CONF-01"], imp:"Revisión periódica de roles poderosos y retiro de los no justificados", ev:"SELECT grantee, granted_role FROM dba_role_privs WHERE granted_role IN ('DBA', ...);", p:"PT-02"},
+  {c:"A5.33", n:"Protección de registros", j:"El rastro de auditoría y los logs son prueba; si cualquiera puede leerlos o borrarlos pierden valor y pueden filtrar datos.", t:["T-07","T-11"], r:["R-CONF-01"], imp:"AUDIT_ADMIN y AUDIT_VIEWER solo en cuentas designadas; permisos del directorio de diagnóstico restringidos", ev:"SELECT grantee, granted_role FROM dba_role_privs WHERE granted_role LIKE 'AUDIT%';", p:"PT-10"},
+  {c:"A8.2", n:"Derechos de acceso privilegiado", j:"Los privilegios administrativos permiten saltarse los demás controles; deben ser pocos y vigilados.", t:["T-02","T-07"], r:["R-CONF-01"], imp:"Sin privilegios ANY ni rol DBA en cuentas de aplicación", ev:"SELECT grantee, privilege FROM dba_sys_privs WHERE privilege LIKE '%ANY%';", p:"PT-01"},
+  {c:"A8.3", n:"Restricción del acceso a la información", j:"Incluso con acceso a una tabla, cada usuario debe ver solo las filas y columnas que le corresponden.", t:["T-02","T-05"], r:["R-CONF-01"], imp:"Política VPD con DBMS_RLS que filtra por usuario asignado", ev:"SELECT policy_name, enable FROM dba_policies WHERE object_owner = 'APP_OWNER';", p:"PT-08"},
+  {c:"A8.5", n:"Autenticación segura", j:"El mecanismo de inicio de sesión debe resistir intentos repetidos y viajar protegido.", t:["T-03","T-09"], r:["R-CONF-02","R-CONF-05"], imp:"FAILED_LOGIN_ATTEMPTS 3 y PASSWORD_LOCK_TIME en el perfil", ev:"ORA-28000 tras tres intentos fallidos; DBA_USERS.ACCOUNT_STATUS = LOCKED(TIMED)", p:"PT-05"},
+  {c:"A8.10", n:"Eliminación de información", j:"La Ley 8968 da derecho a la supresión; un dato borrado no debe seguir accesible sin control.", t:["T-10"], r:["R-CONF-03"], imp:"Procedimiento de supresión; DROP ... PURGE; retención de undo y respaldos documentada", ev:"Consulta AS OF TIMESTAMP y DBA_RECYCLEBIN tras el borrado", p:"PT-14"},
+  {c:"A8.11", n:"Enmascaramiento de datos", j:"Quien no necesita el valor real debe ver un valor oculto, tanto en producción como en copias de prueba.", t:["T-05","T-12"], r:["R-CONF-01","R-CONF-04"], imp:"Data Redaction (DBMS_REDACT) sobre CEDULA; script de enmascaramiento en el clon", ev:"SELECT policy_name, expression FROM redaction_policies;", p:"PT-07"},
+  {c:"A8.12", n:"Prevención de fuga de datos", j:"Los datos salen por archivos robados, exportaciones y copias; hay que cerrar esas vías.", t:["T-04","T-06"], r:["R-CONF-03","R-CONF-04"], imp:"Tablespace cifrado con TDE; roles DATAPUMP_* restringidos", ev:"SELECT tablespace_name, encrypted FROM dba_tablespaces;", p:"PT-06"},
+  {c:"A8.13", n:"Respaldo de la información", j:"Un respaldo es una copia completa; debe estar cifrado y probado.", t:["T-06"], r:["R-CONF-03"], imp:"RMAN con SET ENCRYPTION y RESTORE ... VALIDATE", ev:"SELECT handle, encrypted FROM v$backup_piece;", p:"PT-13"},
+  {c:"A8.15", n:"Registro (logging)", j:"Sin registro no se detecta ni se demuestra un acceso indebido.", t:["T-07","T-11"], r:["R-CONF-01"], imp:"Políticas de auditoría unificada sobre CLIENTES y sobre gestión de cuentas", ev:"SELECT dbusername, action_name, object_name FROM unified_audit_trail;", p:"PT-09"},
+  {c:"A8.20", n:"Seguridad de redes", j:"La red entre cliente y base es otro lugar donde el dato puede exponerse.", t:["T-09"], r:["R-CONF-05"], imp:"Puerto publicado solo en 127.0.0.1; cifrado nativo de red en sqlnet.ora", ev:"docker port oracle-eliasulate; V$SESSION_CONNECT_INFO", p:"PT-12"},
+  {c:"A8.24", n:"Uso de criptografía", comp:true, j:"TDE, cifrado de red y respaldos cifrados son criptografía; este es su control directo.", t:["T-04","T-06","T-09"], r:["R-CONF-03","R-CONF-05"], imp:"AES256 en tablespace, red y respaldo; custodia del keystore", ev:"V$ENCRYPTION_WALLET, V$ENCRYPTED_TABLESPACES", p:"PT-06"},
+  {c:"A8.8", n:"Gestión de vulnerabilidades técnicas", comp:true, j:"El parcheo no tiene control directo en la lista del profesor.", t:["T-08"], r:["R-CONF-01"], imp:"Comparar la versión instalada con la última versión publicada de Free", ev:"SELECT banner_full FROM v$version;", p:"PT-11"},
+  {c:"A8.33", n:"Información de prueba", comp:true, j:"Los clones DEV/TEST deben proteger la información de prueba copiada de producción.", t:["T-12"], r:["R-CONF-04"], imp:"Clonar y enmascarar antes de entregar el clon", ev:"Conteo de correos sin enmascarar en PDB_TEST", p:"PT-16"}
+];
+
+const OBS = [
+  {id:"C-01", c:"A5.12", ve:"Las columnas con datos personales tienen etiqueta de clasificación", como:"PT-15: consulta a DBA_COL_COMMENTS", ok:"Ninguna columna de APP_OWNER sin etiqueta"},
+  {id:"C-02", c:"A5.15", ve:"Un usuario sin grant no puede leer CLIENTES", como:"PT-03: SELECT como USR_CONSULTA", ok:"ORA-00942"},
+  {id:"C-03", c:"A5.16", ve:"Solo existen cuentas nominales aprobadas y abiertas", como:"PT-04: listado de DBA_USERS no mantenidas por Oracle", ok:"El listado coincide con el inventario aprobado"},
+  {id:"C-04", c:"A5.17", ve:"Ninguna cuenta abierta tiene contraseña por defecto y existe un perfil de contraseñas", como:"PT-04: DBA_USERS_WITH_DEFPWD y DBA_PROFILES", ok:"Cero cuentas abiertas con clave por defecto; PERFIL_APP asignado"},
+  {id:"C-05", c:"A5.18", ve:"Los roles poderosos están solo en cuentas aprobadas", como:"PT-02: DBA_ROLE_PRIVS", ok:"Ningún usuario de aplicación con DBA o DATAPUMP_*"},
+  {id:"C-06", c:"A5.33", ve:"El rastro de auditoría solo lo leen cuentas designadas", como:"PT-10: roles AUDIT_* y SELECT de USR_CONSULTA sobre UNIFIED_AUDIT_TRAIL", ok:"USR_CONSULTA recibe ORA-00942"},
+  {id:"C-07", c:"A8.2", ve:"No hay privilegios ANY fuera de las cuentas administrativas", como:"PT-01: DBA_SYS_PRIVS", ok:"Cero filas para cuentas no administrativas"},
+  {id:"C-08", c:"A8.3", ve:"Cada usuario ve solo sus filas de CLIENTES", como:"PT-08: COUNT(*) como USR_CONSULTA", ok:"El conteo es igual al de filas asignadas a ese usuario"},
+  {id:"C-09", c:"A8.5", ve:"La cuenta se bloquea tras tres intentos fallidos", como:"PT-05: tres conexiones con clave errónea", ok:"ORA-28000 en el cuarto intento"},
+  {id:"C-10", c:"A8.10", ve:"El registro suprimido ya no aparece en la tabla y la papelera de APP_OWNER está vacía", como:"PT-14: consulta actual, consulta AS OF y DBA_RECYCLEBIN", ok:"0 filas actuales; papelera vacía; retención residual documentada"},
+  {id:"C-11", c:"A8.11", ve:"La cédula aparece oculta para usuarios no autorizados", como:"PT-07: misma consulta como USR_CONSULTA y como APP_OWNER", ok:"Ninguna cédula real visible para USR_CONSULTA"},
+  {id:"C-12", c:"A8.12", ve:"El datafile cifrado no revela texto conocido", como:"PT-06: grep de una marca en el datafile", ok:"0 coincidencias en ts_conf01.dbf"},
+  {id:"C-13", c:"A8.13", ve:"El último respaldo está cifrado y se puede validar", como:"PT-13: V$BACKUP_PIECE y RESTORE ... VALIDATE", ok:"ENCRYPTED = YES; validación sin errores"},
+  {id:"C-14", c:"A8.15", ve:"Un acceso a CLIENTES queda registrado con usuario, acción y hora", como:"PT-09: UNIFIED_AUDIT_TRAIL", ok:"El evento generado aparece en el rastro"},
+  {id:"C-15", c:"A8.20", ve:"El puerto 1521 solo escucha en el anfitrión local y la sesión va cifrada", como:"PT-12: docker port y V$SESSION_CONNECT_INFO", ok:"127.0.0.1:1521; banner con adaptador de cifrado"}
+];
+
+const MATRIZ = [
+  {f:"M-01", t:"T-02", r:"R-CONF-01", c:"A8.2", p:"PT-01", n:1, ev:"D08, D09", nota:"Sin privilegios ANY directos, pero BASES1 tiene el rol DBA y PDBADMIN tiene PDB_DBA con opción de administración"},
+  {f:"M-02", t:"T-01", r:"R-CONF-01", c:"A5.18", p:"PT-02", n:1, ev:"D05, D09", nota:"No hay revisión documentada de derechos; el rol DBA sigue otorgado a una cuenta de trabajo"},
+  {f:"M-03", t:"T-02", r:"R-CONF-01", c:"A5.15", p:"PT-03", n:1, ev:"D10", nota:"Ningún grant entre esquemas ni a PUBLIC, pero no existe un diseño de roles por función"},
+  {f:"M-04", t:"T-05", r:"R-CONF-01", c:"A8.3", p:"PT-08", n:1, ev:"D10, D13", nota:"El acceso se limita solo por esquema; no hay filtrado por filas (VPD)"},
+  {f:"M-05", t:"T-05", r:"R-CONF-01", c:"A8.11", p:"PT-07", n:0, ev:"D11, D13", nota:"Ninguna política de redacción; SALARIO, EMAIL y PASSWORD se leen completos"},
+  {f:"M-06", t:"T-07", r:"R-CONF-01", c:"A8.15", p:"PT-09", n:1, ev:"D04, D14", nota:"Auditoría unificada activa solo con políticas por defecto; ninguna audita las tablas con datos personales"},
+  {f:"M-07", t:"T-11", r:"R-CONF-01", c:"A5.33", p:"PT-10", n:1, ev:"D14, D17", nota:"Solo SYS lee y administra la auditoría, sin separación de funciones; PERSONAS_LOG guarda historial de salarios sin protección"},
+  {f:"M-08", t:"T-08", r:"R-CONF-01", c:"A8.8", comp:true, p:"PT-11", n:1, ev:"D00, D16", nota:"23.26.1 sin parches registrados; Oracle ofrece 23.26.3"},
+  {f:"M-09", t:"T-01", r:"R-CONF-02", c:"A5.16", p:"PT-04", n:1, ev:"D05", nota:"5 cuentas abiertas; AFIN y PDBADMIN nunca han iniciado sesión"},
+  {f:"M-10", t:"T-03", r:"R-CONF-02", c:"A5.17", p:"PT-04", n:1, ev:"D06, D07, D11", nota:"Sin claves por defecto, pero el perfil no exige complejidad ni limita la reutilización; CONEXION_ORACLE guarda contraseñas"},
+  {f:"M-11", t:"T-03", r:"R-CONF-02", c:"A8.5", p:"PT-05", n:1, ev:"D04, D05, D07", nota:"Bloqueo a los 10 intentos (perfil DEFAULT) y corte a los 3 por conexión; verificadores 11G aún presentes"},
+  {f:"M-12", t:"T-04", r:"R-CONF-03", c:"A8.12", p:"PT-06", n:0, ev:"D02, D12", nota:"Keystore NOT_AVAILABLE; 0 de 12 tablespaces cifrados"},
+  {f:"M-13", t:"T-06", r:"R-CONF-03", c:"A8.13", p:"PT-13", n:1, ev:"D00, D03", nota:"ARCHIVELOG y respaldos RMAN existen, pero ninguno está cifrado y no hay validación registrada; el último es del 7 oct"},
+  {f:"M-14", t:"T-10", r:"R-CONF-03", c:"A8.10", p:"PT-14", n:0, ev:"D15", nota:"PERSONAS y PERSONAS_LOG, borradas el 26 may, siguen en la papelera; no hay procedimiento de supresión"},
+  {f:"M-15", t:"T-05", r:"R-CONF-04", c:"A5.12", p:"PT-15", n:0, ev:"D11", nota:"Ninguna de las 19 columnas sensibles tiene clasificación"},
+  {f:"M-16", t:"T-06", r:"R-CONF-04", c:"A8.12", p:"PT-02", n:1, ev:"D09", nota:"Los roles de exportación no están otorgados directamente, pero BASES1 los hereda por el rol DBA"},
+  {f:"M-17", t:"T-12", r:"R-CONF-04", c:"A8.11", p:"PT-16", n:0, ev:"D00", nota:"No hay procedimiento de enmascaramiento; FREEPDB2 está abierto y sin analizar"},
+  {f:"M-18", t:"T-09", r:"R-CONF-05", c:"A8.20", p:"PT-12", n:0, ev:"D-red", nota:"1521 y 5500 publicados en 0.0.0.0 y ::; sqlnet.ora sin cifrado ni filtro de nodos"}
+];
+const estadoDe = n => n >= 3 ? ["cumple","Cumple"] : n === 2 ? ["parcial","Parcial"] : ["nocumple","No cumple"];
+
+const HALLAZGOS = [
+  {id:"H-01", g:"Alta", t:"BASES1 tiene el rol DBA. Puede leer y exportar todos los esquemas del PDB, incluidos salarios y contraseñas guardadas.", ev:"D09", r:"R-CONF-01", c:["A8.2","A5.18"]},
+  {id:"H-02", g:"Alta", t:"BASES1.CONEXION_ORACLE.PASSWORD (CLOB, 2 filas) guarda contraseñas de conexión a bases Oracle. Falta confirmar si están cifradas (V-01).", ev:"D11", r:"R-CONF-01", c:["A5.17"]},
+  {id:"H-03", g:"Alta", t:"Los puertos 1521 (SQL*Net) y 5500 (EM Express) están publicados en todas las interfaces (0.0.0.0 y ::), y sqlnet.ora no tiene cifrado ni filtro de nodos.", ev:"D-red", r:"R-CONF-05", c:["A8.20"]},
+  {id:"H-04", g:"Alta", t:"No hay TDE: keystore NOT_AVAILABLE, wallet_root vacío y 0 de 12 tablespaces cifrados. Los datos de AFIN, BASES1 y GESTOR_RMAN están en USERS sin cifrar.", ev:"D02, D04, D12", r:"R-CONF-03", c:["A8.12","A8.24"]},
+  {id:"H-05", g:"Alta", t:"Las 10 piezas RMAN más recientes (4 al 7 oct) tienen ENCRYPTED = NO, y la configuración de RMAN es la de fábrica.", ev:"D03", r:"R-CONF-03", c:["A8.13"]},
+  {id:"H-06", g:"Alta", t:"No hay ninguna política de Data Redaction ni VPD: SALARIO, EMAIL y PASSWORD se leen completos con cualquier acceso a la tabla.", ev:"D11, D13", r:"R-CONF-01", c:["A8.11","A8.3"]},
+  {id:"H-07", g:"Media", t:"PERSONAS y PERSONAS_LOG (nombre y salario), borradas el 26 may, siguen recuperables en la papelera de BASES1.", ev:"D15", r:"R-CONF-03", c:["A8.10"]},
+  {id:"H-08", g:"Media", t:"Las 5 cuentas propias están abiertas con el perfil DEFAULT: sin función de verificación, reutilización ilimitada y bloqueo a los 10 intentos. AFIN y PDBADMIN nunca han iniciado sesión.", ev:"D05, D07", r:"R-CONF-02", c:["A5.16","A5.17"]},
+  {id:"H-09", g:"Media", t:"Las cuentas conservan el verificador de contraseña 11G además del 12C.", ev:"D05", r:"R-CONF-02", c:["A8.5"]},
+  {id:"H-10", g:"Media", t:"La auditoría solo tiene las políticas por defecto de Oracle; ninguna cubre tablas con datos personales, y FREEPDB1 registra 0 eventos en 7 días.", ev:"D14", r:"R-CONF-01", c:["A8.15"]},
+  {id:"H-11", g:"Media", t:"Ninguna de las 19 columnas con nombres de datos personales o credenciales tiene clasificación.", ev:"D11", r:"R-CONF-04", c:["A5.12"]},
+  {id:"H-12", g:"Media", t:"El motor es la versión 23.26.1, sin parches registrados; Oracle ofrece la 23.26.3 para descarga.", ev:"D00, D16", r:"R-CONF-01", c:["A8.8"]},
+  {id:"H-13", g:"Media", t:"FREEPDB2 está abierto y no se analizó. Si es copia de FREEPDB1, contiene los mismos datos sin enmascarar (V-02).", ev:"D00", r:"R-CONF-04", c:["A8.11","A8.33"]}
+];
+
+const V01 = `-- V-01  Formato de las contraseñas guardadas (no muestra ninguna contraseña)
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+SELECT ROWNUM AS fila,
+       DBMS_LOB.GETLENGTH(password) AS longitud,
+       CASE
+         WHEN DBMS_LOB.SUBSTR(password, 8, 1) = 'eyJpdiI6' THEN 'Cifrada (formato Laravel Crypt)'
+         WHEN DBMS_LOB.SUBSTR(password, 4, 1) IN ('$2y$','$2a$','$2b$') THEN 'Hash bcrypt'
+         ELSE 'Posible texto plano: revisar'
+       END AS formato
+FROM   bases1.conexion_oracle;
+
+SELECT CASE
+         WHEN SUBSTR(password, 1, 4) IN ('$2y$','$2a$','$2b$') THEN 'Hash bcrypt'
+         WHEN SUBSTR(password, 1, 9) = '$argon2id' THEN 'Hash argon2id'
+         ELSE 'Revisar'
+       END AS formato,
+       COUNT(*) AS cuentas
+FROM   bases1.users
+GROUP  BY CASE
+         WHEN SUBSTR(password, 1, 4) IN ('$2y$','$2a$','$2b$') THEN 'Hash bcrypt'
+         WHEN SUBSTR(password, 1, 9) = '$argon2id' THEN 'Hash argon2id'
+         ELSE 'Revisar'
+       END;`;
+
+const V02 = `[Console]::OutputEncoding = [Text.Encoding]::UTF8
+(Get-Content diagnostico_confidencialidad.sql) -replace 'CONTAINER = FREEPDB1','CONTAINER = FREEPDB2' | Set-Content diagnostico_freepdb2.sql
+docker cp diagnostico_freepdb2.sql oracle-eliasulate:/tmp/diagnostico_freepdb2.sql
+docker exec oracle-eliasulate sqlplus -s "/ as sysdba" "@/tmp/diagnostico_freepdb2.sql" | Out-File -Encoding utf8 evidencias\\D-freepdb2.txt`;
+
+const V03 = `netstat -ano | findstr ":1521 :5500" | Out-File -Encoding utf8 evidencias\\D-red-windows.txt
+Get-Content evidencias\\D-red-windows.txt`;
+
+const PREP = `-- PREP  Datos de prueba ficticios (SYS como SYSDBA en FREEPDB1)
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+CREATE USER app_owner IDENTIFIED BY &clave_app_owner QUOTA 50M ON users;
+GRANT CREATE SESSION, CREATE TABLE, CREATE PROCEDURE TO app_owner;
+
+CREATE TABLE app_owner.clientes (
+  id_cliente       NUMBER PRIMARY KEY,
+  nombre           VARCHAR2(100),
+  cedula           VARCHAR2(12),
+  correo           VARCHAR2(100),
+  telefono         VARCHAR2(15),
+  salario          NUMBER(12,2),
+  usuario_asignado VARCHAR2(30)
+);
+
+INSERT INTO app_owner.clientes VALUES (1,  'Cliente Ficticio Uno',  '100000001', 'uno@correo.test',  '8000-0001', 850000, 'USR_CONSULTA');
+INSERT INTO app_owner.clientes VALUES (2,  'Cliente Ficticio Dos',  '100000002', 'dos@correo.test',  '8000-0002', 920000, 'USR_CONSULTA');
+INSERT INTO app_owner.clientes VALUES (3,  'Cliente Ficticio Tres', '100000003', 'tres@correo.test', '8000-0003', 640000, 'USR_OTRO');
+INSERT INTO app_owner.clientes VALUES (999,'Titular Supresion',     '100000999', 'baja@correo.test', '8000-0999', 500000, 'USR_OTRO');
+COMMIT;
+
+CREATE USER usr_consulta IDENTIFIED BY &clave_usr_consulta;
+CREATE USER usr_otro     IDENTIFIED BY &clave_usr_otro;
+GRANT CREATE SESSION TO usr_consulta, usr_otro;`;
+
+const ENC = (id, titulo, cont) => `-- ${id}  ${titulo}
+-- Conexión: ${cont}
+SET LINESIZE 200
+SET PAGESIZE 100
+SPOOL evidencias/${id}.txt
+PROMPT === ${id}: ${titulo} ===
+SELECT SYS_CONTEXT('USERENV','CON_NAME') AS contenedor,
+       USER AS ejecutado_por,
+       TO_CHAR(SYSTIMESTAMP,'YYYY-MM-DD HH24:MI:SS') AS fecha
+FROM   dual;
+`;
+
+const PRUEBAS = [
+  {id:"PT-00", tit:"Línea base del entorno", tipo:"Consulta de diccionario", r:"Todos", c:["Todos"], obj:"Dejar constancia de versión, contenedor y opciones de seguridad disponibles en 26ai Free antes de cualquier otra prueba.", proc:["Conectar como SYSDBA a FREEPDB1.","Ejecutar el script y guardar la salida.","En el anfitrión, ejecutar los dos comandos docker indicados y guardar su salida."], esp:"Versión 23.26.1; las opciones de seguridad que usarán las pruebas aparecen con VALUE = TRUE.", herr:"SQL Developer, Docker CLI", req:"Ninguno adicional",
+   sql: ENC("PT-00","Línea base del entorno","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT banner_full FROM v$version;
+SELECT parameter, value
+FROM   v$option
+WHERE  parameter IN ('Advanced Security','Unified Auditing',
+                     'Fine-grained Auditing','Oracle Database Vault');
+SPOOL OFF
+
+-- En el anfitrión:
+--   docker ps --filter name=oracle-eliasulate
+--   docker port oracle-eliasulate`},
+
+  {id:"PT-01", tit:"Privilegios de sistema críticos", tipo:"Consulta de diccionario", r:"R-CONF-01", c:["A8.2"], obj:"Detectar privilegios ANY y otros críticos fuera de las cuentas administrativas aprobadas.", proc:["Conectar con un usuario con SELECT_CATALOG_ROLE.","Ejecutar el script.","Comparar el resultado con el inventario de cuentas administrativas."], esp:"Cero filas para cuentas no administrativas.", herr:"SQL Developer", req:"SELECT_CATALOG_ROLE",
+   sql: ENC("PT-01","Privilegios de sistema críticos","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT grantee, privilege, admin_option
+FROM   dba_sys_privs
+WHERE  (privilege LIKE '%ANY%'
+        OR privilege IN ('ALTER SYSTEM','BECOME USER',
+                         'EXEMPT ACCESS POLICY','EXEMPT REDACTION POLICY'))
+AND    grantee NOT IN (SELECT username FROM dba_users WHERE oracle_maintained = 'Y')
+AND    grantee NOT IN (SELECT role FROM dba_roles WHERE oracle_maintained = 'Y')
+ORDER  BY grantee, privilege;
+SPOOL OFF`},
+
+  {id:"PT-02", tit:"Roles críticos y de exportación masiva", tipo:"Consulta de diccionario", r:"R-CONF-01, R-CONF-04", c:["A5.18","A8.12"], obj:"Comprobar que DBA, DATAPUMP_* y AUDIT_ADMIN solo están en cuentas aprobadas, y que PUBLIC no tiene grants sobre APP_OWNER.", proc:["Ejecutar el script.","Marcar en la salida cada concesión no justificada."], esp:"Ningún usuario de aplicación con roles críticos; cero grants a PUBLIC sobre APP_OWNER.", herr:"SQL Developer", req:"SELECT_CATALOG_ROLE",
+   sql: ENC("PT-02","Roles críticos y de exportación masiva","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT grantee, granted_role, admin_option
+FROM   dba_role_privs
+WHERE  granted_role IN ('DBA','DATAPUMP_EXP_FULL_DATABASE','DATAPUMP_IMP_FULL_DATABASE',
+                        'EXP_FULL_DATABASE','IMP_FULL_DATABASE','AUDIT_ADMIN')
+AND    grantee NOT IN (SELECT username FROM dba_users WHERE oracle_maintained = 'Y')
+ORDER  BY granted_role, grantee;
+
+SELECT owner, table_name, privilege
+FROM   dba_tab_privs
+WHERE  grantee = 'PUBLIC'
+AND    owner   = 'APP_OWNER';
+SPOOL OFF`},
+
+  {id:"PT-03", tit:"Prueba negativa de mínimo privilegio", tipo:"Prueba negativa", r:"R-CONF-01", c:["A5.15"], obj:"Demostrar que sin grant no hay lectura, y que con solo SELECT no hay modificación.", proc:["Conectar como USR_CONSULTA y ejecutar el primer SELECT.","Como APP_OWNER, otorgar SELECT a USR_CONSULTA.","Como USR_CONSULTA, intentar el UPDATE."], esp:"ORA-00942 en el SELECT sin grant; ORA-01031 en el UPDATE.", herr:"SQL Developer", req:"Datos de prueba",
+   sql: `-- PT-03  Prueba negativa de mínimo privilegio
+SPOOL evidencias/PT-03.txt
+
+-- 1) Conectado como USR_CONSULTA, sin grant:
+SELECT * FROM app_owner.clientes;
+-- Esperado: ORA-00942: table or view does not exist
+
+-- 2) Conectado como APP_OWNER:
+GRANT SELECT ON app_owner.clientes TO usr_consulta;
+
+-- 3) De nuevo como USR_CONSULTA:
+UPDATE app_owner.clientes SET salario = 0;
+-- Esperado: ORA-01031: insufficient privileges
+SPOOL OFF`},
+
+  {id:"PT-04", tit:"Cuentas, estado y contraseñas por defecto", tipo:"Consulta de diccionario", r:"R-CONF-02", c:["A5.16","A5.17"], obj:"Revisar que solo existen cuentas nominales aprobadas, sin claves por defecto y con perfil propio.", proc:["Ejecutar el script.","Comparar la lista con el inventario de cuentas aprobado."], esp:"Ninguna cuenta abierta con clave por defecto; cuentas de aplicación con PERFIL_APP.", herr:"SQL Developer", req:"SELECT_CATALOG_ROLE; perfil creado en PT-05",
+   sql: ENC("PT-04","Cuentas, estado y contraseñas","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT username, account_status, profile, authentication_type,
+       password_versions, last_login
+FROM   dba_users
+WHERE  oracle_maintained = 'N'
+ORDER  BY username;
+
+SELECT u.username, u.account_status
+FROM   dba_users_with_defpwd d
+JOIN   dba_users u ON u.username = d.username
+ORDER  BY u.account_status, u.username;
+SPOOL OFF`},
+
+  {id:"PT-05", tit:"Bloqueo por intentos fallidos", tipo:"Prueba negativa", r:"R-CONF-02", c:["A8.5","A5.17"], obj:"Comprobar que el perfil bloquea la cuenta tras tres intentos fallidos.", proc:["Crear el perfil y asignarlo.","Intentar tres conexiones de USR_CONSULTA con clave errónea.","Intentar una cuarta con la clave correcta.","Consultar el estado de la cuenta."], esp:"ORA-01017 en los tres intentos; ORA-28000 en el cuarto; ACCOUNT_STATUS = LOCKED(TIMED).", herr:"SQL Developer o SQL*Plus", req:"SYSDBA para crear el perfil",
+   sql: ENC("PT-05","Bloqueo por intentos fallidos","SYS AS SYSDBA, servicio FREEPDB1") + `
+CREATE PROFILE perfil_app LIMIT
+  FAILED_LOGIN_ATTEMPTS 3
+  PASSWORD_LOCK_TIME    1/24
+  PASSWORD_LIFE_TIME    90
+  PASSWORD_REUSE_MAX    5
+  PASSWORD_REUSE_TIME   365;
+-- Opcional: PASSWORD_VERIFY_FUNCTION ora12c_verify_function, si existe en el PDB
+ALTER USER usr_consulta PROFILE perfil_app;
+ALTER USER usr_otro     PROFILE perfil_app;
+
+SELECT resource_name, limit
+FROM   dba_profiles
+WHERE  profile = 'PERFIL_APP' AND resource_type = 'PASSWORD';
+
+-- Ahora: 3 conexiones de USR_CONSULTA con clave errónea y una con la correcta.
+SELECT username, account_status, lock_date
+FROM   dba_users
+WHERE  username = 'USR_CONSULTA';
+
+-- Restaurar al terminar la prueba:
+-- ALTER USER usr_consulta ACCOUNT UNLOCK;
+SPOOL OFF`},
+
+  {id:"PT-06", tit:"TDE: keystore y tablespace cifrado", tipo:"Configuración y prueba de archivo", r:"R-CONF-03", c:["A8.12","A8.24"], obj:"Cifrar un tablespace y demostrar que el texto no se lee directamente en el datafile.", proc:["Ejecutar la parte 1 y guardar el estado actual.","Configurar el keystore (parte 2) desde CDB$ROOT; requiere reiniciar la base.","Crear el tablespace cifrado y las tablas de prueba (partes 3 y 4).","En el anfitrión, buscar la marca en ambos datafiles."], esp:"STATUS = OPEN; TS_CONF con ENCRYPTED = YES; 0 coincidencias en ts_conf01.dbf y al menos 1 en users01.dbf.", herr:"SQL*Plus en el contenedor, Docker CLI", req:"SYSDBA en CDB$ROOT; reinicio. El keystore debe quedar en el volumen persistente o se pierde al recrear el contenedor.",
+   sql: `-- PT-06  TDE: keystore y tablespace cifrado
+-- 1) Estado actual (ejecutable ya, en CDB$ROOT)
+SELECT con_id, wrl_type, wrl_parameter, status, wallet_type, keystore_mode
+FROM   v$encryption_wallet;
+SELECT name, value FROM v$parameter WHERE name IN ('wallet_root','tde_configuration');
+
+-- 2) Configuración en CDB$ROOT (docker exec -it oracle-eliasulate sqlplus / as sysdba)
+--    Anfitrión: docker exec oracle-eliasulate mkdir -p /opt/oracle/oradata/wallet
+--    Nota para el informe: el keystore junto a los datafiles es comodidad de laboratorio;
+--    en producción se guarda en otro medio.
+ALTER SYSTEM SET wallet_root = '/opt/oracle/oradata/wallet' SCOPE = SPFILE;
+SHUTDOWN IMMEDIATE
+STARTUP
+ALTER PLUGGABLE DATABASE ALL OPEN;
+ALTER SYSTEM SET tde_configuration = 'KEYSTORE_CONFIGURATION=FILE' SCOPE = BOTH;
+ADMINISTER KEY MANAGEMENT CREATE KEYSTORE IDENTIFIED BY &clave_keystore;
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY &clave_keystore CONTAINER = ALL;
+ADMINISTER KEY MANAGEMENT SET KEY IDENTIFIED BY &clave_keystore WITH BACKUP CONTAINER = ALL;
+-- Si el contenedor se detiene al apagar la base: docker start oracle-eliasulate
+
+-- 3) Tablespace nuevo cifrado en FREEPDB1
+ALTER SESSION SET CONTAINER = FREEPDB1;
+CREATE TABLESPACE ts_conf
+  DATAFILE '/opt/oracle/oradata/FREE/FREEPDB1/ts_conf01.dbf' SIZE 50M
+  ENCRYPTION USING 'AES256' ENCRYPT;
+ALTER USER app_owner QUOTA 10M ON ts_conf;
+SELECT tablespace_name, encrypted FROM dba_tablespaces ORDER BY 1;
+
+-- 4) Prueba de efectividad
+CREATE TABLE app_owner.prueba_tde_cifrada (txt VARCHAR2(50)) TABLESPACE ts_conf;
+CREATE TABLE app_owner.prueba_tde_plana   (txt VARCHAR2(50)) TABLESPACE users;
+INSERT INTO app_owner.prueba_tde_cifrada VALUES ('MARCA-PRUEBA-TDE');
+INSERT INTO app_owner.prueba_tde_plana   VALUES ('MARCA-PRUEBA-TDE');
+COMMIT;
+ALTER SYSTEM CHECKPOINT;
+SELECT file_name FROM dba_data_files;   -- confirma las rutas
+
+-- Anfitrión (guardar ambas salidas):
+--   docker exec oracle-eliasulate grep -c -a MARCA-PRUEBA-TDE /opt/oracle/oradata/FREE/FREEPDB1/ts_conf01.dbf
+--   docker exec oracle-eliasulate grep -c -a MARCA-PRUEBA-TDE /opt/oracle/oradata/FREE/FREEPDB1/users01.dbf`},
+
+  {id:"PT-07", tit:"Data Redaction sobre la cédula", tipo:"Prueba funcional", r:"R-CONF-01", c:["A8.11"], obj:"Demostrar que un usuario no autorizado ve la cédula oculta y el dueño la ve completa.", proc:["Otorgar EXECUTE ON DBMS_REDACT a APP_OWNER.","Crear la política como APP_OWNER.","Ejecutar la misma consulta como USR_CONSULTA y como APP_OWNER.","Listar quién tiene EXEMPT REDACTION POLICY."], esp:"USR_CONSULTA ve la columna en blanco; APP_OWNER ve los valores; ninguna cuenta de aplicación con la exención.", herr:"SQL Developer", req:"GRANT EXECUTE ON DBMS_REDACT TO app_owner (como SYS). Limitación: la redacción no impide inferir valores con WHERE.",
+   sql: `-- PT-07  Data Redaction sobre la cédula
+SPOOL evidencias/PT-07.txt
+-- Como APP_OWNER:
+BEGIN
+  DBMS_REDACT.ADD_POLICY(
+    object_schema => 'APP_OWNER',
+    object_name   => 'CLIENTES',
+    column_name   => 'CEDULA',
+    policy_name   => 'RED_CLIENTES_CEDULA',
+    function_type => DBMS_REDACT.FULL,
+    expression    => q'[SYS_CONTEXT('USERENV','SESSION_USER') <> 'APP_OWNER']');
+END;
+/
+SELECT object_owner, object_name, policy_name, expression, enable FROM redaction_policies;
+SELECT object_name, column_name, function_type FROM redaction_columns;
+
+-- Como USR_CONSULTA y luego como APP_OWNER:
+SELECT id_cliente, cedula FROM app_owner.clientes FETCH FIRST 5 ROWS ONLY;
+
+-- Como SYS:
+SELECT grantee FROM dba_sys_privs WHERE privilege = 'EXEMPT REDACTION POLICY';
+SPOOL OFF`},
+
+  {id:"PT-08", tit:"VPD: filtrado de filas por usuario", tipo:"Prueba funcional", r:"R-CONF-01", c:["A8.3"], obj:"Demostrar que cada usuario ve solo las filas que tiene asignadas.", proc:["Otorgar EXECUTE ON DBMS_RLS a APP_OWNER y SELECT sobre CLIENTES a USR_OTRO.","Crear la función y la política como APP_OWNER.","Contar filas como USR_CONSULTA y como USR_OTRO.","Listar quién tiene EXEMPT ACCESS POLICY."], esp:"USR_CONSULTA cuenta 2 filas y USR_OTRO cuenta 2 con los datos de prueba; APP_OWNER ve 4.", herr:"SQL Developer", req:"GRANT EXECUTE ON DBMS_RLS TO app_owner (como SYS)",
+   sql: `-- PT-08  VPD: filtrado de filas por usuario
+SPOOL evidencias/PT-08.txt
+-- Como APP_OWNER:
+CREATE OR REPLACE FUNCTION app_owner.fn_vpd_clientes (
+  p_schema IN VARCHAR2,
+  p_object IN VARCHAR2
+) RETURN VARCHAR2
+AS
+BEGIN
+  IF SYS_CONTEXT('USERENV','SESSION_USER') = 'APP_OWNER' THEN
+    RETURN NULL;
+  END IF;
+  RETURN 'usuario_asignado = SYS_CONTEXT(''USERENV'',''SESSION_USER'')';
+END;
+/
+BEGIN
+  DBMS_RLS.ADD_POLICY(
+    object_schema   => 'APP_OWNER',
+    object_name     => 'CLIENTES',
+    policy_name     => 'VPD_CLIENTES',
+    function_schema => 'APP_OWNER',
+    policy_function => 'FN_VPD_CLIENTES',
+    statement_types => 'SELECT');
+END;
+/
+GRANT SELECT ON app_owner.clientes TO usr_otro;
+
+SELECT object_owner, object_name, policy_name, function, enable
+FROM   dba_policies
+WHERE  object_owner = 'APP_OWNER';
+
+-- Como USR_CONSULTA, como USR_OTRO y como APP_OWNER:
+SELECT COUNT(*) FROM app_owner.clientes;
+
+-- Como SYS:
+SELECT grantee FROM dba_sys_privs WHERE privilege = 'EXEMPT ACCESS POLICY';
+SPOOL OFF`},
+
+  {id:"PT-09", tit:"Auditoría unificada de accesos", tipo:"Prueba de auditoría", r:"R-CONF-01", c:["A8.15"], obj:"Generar un acceso a CLIENTES y un cambio de cuentas, y encontrarlos en el rastro.", proc:["Crear y activar las dos políticas.","Como USR_CONSULTA, consultar CLIENTES.","Como SYS, crear y borrar un usuario de prueba.","Consultar el rastro."], esp:"El SELECT de USR_CONSULTA y el CREATE USER aparecen con usuario, acción, objeto y hora.", herr:"SQL Developer", req:"AUDIT_ADMIN. En 26ai solo existe la auditoría unificada.",
+   sql: ENC("PT-09","Auditoría unificada de accesos","SYS AS SYSDBA, servicio FREEPDB1") + `
+CREATE AUDIT POLICY pol_conf_clientes
+  ACTIONS SELECT ON app_owner.clientes,
+          UPDATE ON app_owner.clientes,
+          DELETE ON app_owner.clientes;
+AUDIT POLICY pol_conf_clientes;
+
+CREATE AUDIT POLICY pol_conf_cuentas
+  ACTIONS CREATE USER, ALTER USER, DROP USER, GRANT, REVOKE;
+AUDIT POLICY pol_conf_cuentas;
+
+SELECT policy_name, enabled_option, entity_name, success, failure
+FROM   audit_unified_enabled_policies;
+
+-- Generar actividad (SELECT como USR_CONSULTA; CREATE/DROP USER de prueba como SYS) y luego:
+SELECT event_timestamp, dbusername, action_name, object_schema, object_name, return_code
+FROM   unified_audit_trail
+WHERE  object_name = 'CLIENTES' OR action_name IN ('CREATE USER','DROP USER')
+ORDER  BY event_timestamp DESC
+FETCH FIRST 20 ROWS ONLY;
+SPOOL OFF`},
+
+  {id:"PT-10", tit:"Protección del rastro de auditoría y logs", tipo:"Revisión de configuración", r:"R-CONF-01", c:["A5.33","A8.15"], obj:"Comprobar que solo cuentas designadas leen o administran la auditoría y que el directorio de diagnóstico no es de acceso general.", proc:["Ejecutar el script como SYS.","Como USR_CONSULTA, intentar leer UNIFIED_AUDIT_TRAIL.","En el anfitrión, revisar los permisos del directorio de trazas."], esp:"AUDIT_ADMIN/AUDIT_VIEWER solo en cuentas designadas; ORA-00942 para USR_CONSULTA; trazas propiedad de oracle sin permiso de escritura para otros.", herr:"SQL Developer, Docker CLI", req:"SELECT_CATALOG_ROLE",
+   sql: ENC("PT-10","Protección del rastro de auditoría y logs","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT grantee, granted_role
+FROM   dba_role_privs
+WHERE  granted_role IN ('AUDIT_ADMIN','AUDIT_VIEWER')
+ORDER  BY granted_role, grantee;
+
+SELECT parameter_name, parameter_value, audit_trail
+FROM   dba_audit_mgmt_config_params;
+
+SELECT name, value FROM v$diag_info
+WHERE  name IN ('ADR Home','Diag Trace','Diag Alert');
+SPOOL OFF
+
+-- Como USR_CONSULTA:
+SELECT COUNT(*) FROM unified_audit_trail;   -- esperado ORA-00942
+
+-- Anfitrión (usar la ruta Diag Trace obtenida arriba):
+--   docker exec oracle-eliasulate ls -ld <ruta_diag_trace>`},
+
+  {id:"PT-11", tit:"Versión y parches del motor", tipo:"Consulta de versión", r:"R-CONF-01", c:["A8.8"], obj:"Documentar la versión instalada y compararla con la última publicada de Oracle Database Free.", proc:["Ejecutar el script.","En el anfitrión, consultar los parches y la fecha de la imagen.","Comparar con la versión vigente en la página oficial de Oracle Database Free."], esp:"Se conoce la versión exacta y su distancia con la vigente; si hay una versión más nueva, el estado será Parcial.", herr:"SQL Developer, Docker CLI", req:"Control complementario (A8.8), fuera de la lista del profesor",
+   sql: ENC("PT-11","Versión y parches del motor","SYS AS SYSDBA, servicio FREEPDB1") + `
+SELECT banner_full FROM v$version;
+SELECT patch_id, action, status, action_time, description
+FROM   dba_registry_sqlpatch
+ORDER  BY action_time;
+SPOOL OFF
+
+-- Anfitrión:
+--   docker exec oracle-eliasulate bash -c '$ORACLE_HOME/OPatch/opatch lspatches'
+--   docker inspect --format '{{.Config.Image}} {{.Created}}' oracle-eliasulate`},
+
+  {id:"PT-12", tit:"Exposición del puerto y cifrado de red", tipo:"Configuración de red", r:"R-CONF-05", c:["A8.20","A8.5"], obj:"Limitar el listener al anfitrión local y cifrar la sesión.", proc:["Guardar la salida actual de docker port.","Si muestra 0.0.0.0, recrear el contenedor publicando 127.0.0.1:1521:1521 con el mismo volumen.","Ubicar sqlnet.ora con lsnrctl status y añadir los parámetros indicados.","Abrir una sesión nueva y consultar el banner."], esp:"docker port muestra 127.0.0.1:1521; el banner de la sesión incluye el adaptador de cifrado AES256.", herr:"Docker CLI, lsnrctl, SQL Developer", req:"Recrear el contenedor sin el volumen correcto borra la base: verificar el volumen antes. El PDF pide TLS; el cifrado nativo es más simple y debe explicarse como alternativa.",
+   sql: `-- PT-12  Exposición del puerto y cifrado de red
+-- Anfitrión:
+--   docker port oracle-eliasulate
+--     antes:   1521/tcp -> 0.0.0.0:1521
+--     después: 1521/tcp -> 127.0.0.1:1521
+--   docker inspect --format '{{json .Mounts}}' oracle-eliasulate   (confirmar el volumen)
+--   docker exec oracle-eliasulate lsnrctl status                  (ubicar sqlnet.ora)
+
+-- Parámetros a añadir en el sqlnet.ora del servidor:
+--   SQLNET.ENCRYPTION_SERVER = REQUIRED
+--   SQLNET.ENCRYPTION_TYPES_SERVER = (AES256)
+--   SQLNET.CRYPTO_CHECKSUM_SERVER = REQUIRED
+
+SPOOL evidencias/PT-12.txt
+-- En una sesión nueva desde SQL Developer:
+SELECT SYS_CONTEXT('USERENV','NETWORK_PROTOCOL') AS protocolo FROM dual;
+SELECT network_service_banner
+FROM   v$session_connect_info
+WHERE  sid = SYS_CONTEXT('USERENV','SID');
+SPOOL OFF`},
+
+  {id:"PT-13", tit:"Respaldo cifrado y validado con RMAN", tipo:"Respaldo", r:"R-CONF-03", c:["A8.13"], obj:"Generar un respaldo cifrado del PDB y comprobar que se puede validar.", proc:["Entrar a RMAN en el contenedor.","Activar cifrado por contraseña y respaldar FREEPDB1.","Validar la restauración con la contraseña.","Consultar V$BACKUP_PIECE desde CDB$ROOT."], esp:"ENCRYPTED = YES en las piezas nuevas; RESTORE ... VALIDATE termina sin errores.", herr:"RMAN, SQL*Plus", req:"SYSDBA o SYSBACKUP. Sin ARCHIVELOG, respaldar con la base en estado MOUNT.",
+   sql: `-- PT-13  Respaldo cifrado y validado con RMAN
+-- Anfitrión: docker exec -it oracle-eliasulate rman target /
+-- (guardar la salida completa de RMAN como evidencia)
+RMAN> SHOW ENCRYPTION FOR DATABASE;
+RMAN> SET ENCRYPTION ON IDENTIFIED BY <clave_respaldo> ONLY;
+RMAN> BACKUP PLUGGABLE DATABASE freepdb1;
+RMAN> SET DECRYPTION IDENTIFIED BY <clave_respaldo>;
+RMAN> RESTORE PLUGGABLE DATABASE freepdb1 VALIDATE;
+
+-- En SQL*Plus, CDB$ROOT:
+SPOOL evidencias/PT-13.txt
+SELECT recid, handle, encrypted, completion_time
+FROM   v$backup_piece
+ORDER  BY completion_time DESC
+FETCH FIRST 5 ROWS ONLY;
+SPOOL OFF`},
+
+  {id:"PT-14", tit:"Supresión de un titular y datos residuales", tipo:"Prueba funcional", r:"R-CONF-03", c:["A8.10"], obj:"Mostrar qué queda después de borrar un titular y documentar dónde persiste el dato.", proc:["Borrar el titular 999 como APP_OWNER.","Comprobar que ya no aparece.","Consultar la tabla AS OF de cinco minutos antes.","Revisar papelera y retención de undo."], esp:"0 filas actuales; la consulta AS OF todavía lo muestra dentro de la retención, lo que se reporta como dato residual con su plazo.", herr:"SQL Developer", req:"Flashback query requiere FLASHBACK sobre la tabla o ser el dueño",
+   sql: ENC("PT-14","Supresión de un titular","APP_OWNER y luego SYS, servicio FREEPDB1") + `
+-- Como APP_OWNER:
+DELETE FROM app_owner.clientes WHERE id_cliente = 999;
+COMMIT;
+SELECT COUNT(*) FROM app_owner.clientes WHERE id_cliente = 999;   -- esperado 0
+
+SELECT id_cliente, nombre
+FROM   app_owner.clientes AS OF TIMESTAMP SYSTIMESTAMP - INTERVAL '5' MINUTE
+WHERE  id_cliente = 999;   -- evidencia del dato residual en undo
+
+-- Como SYS:
+SELECT owner, original_name, droptime FROM dba_recyclebin WHERE owner = 'APP_OWNER';
+SELECT name, value FROM v$parameter WHERE name IN ('recyclebin','undo_retention');
+-- Tablas temporales sin pasar por la papelera: DROP TABLE ... PURGE;
+SPOOL OFF`},
+
+  {id:"PT-15", tit:"Clasificación de columnas", tipo:"Consulta de diccionario", r:"R-CONF-04", c:["A5.12"], obj:"Etiquetar cada columna de APP_OWNER según el esquema de clasificación y verificar que ninguna queda sin etiqueta.", proc:["Ejecutar los COMMENT como APP_OWNER.","Listar las etiquetas.","Listar columnas sin etiqueta."], esp:"Todas las columnas con etiqueta; la segunda consulta devuelve 0 filas.", herr:"SQL Developer", req:"Ninguno adicional. El esquema RESTRINGIDO / CONFIDENCIAL / INTERNO es propio.",
+   sql: ENC("PT-15","Clasificación de columnas","APP_OWNER, servicio FREEPDB1") + `
+COMMENT ON COLUMN app_owner.clientes.id_cliente       IS '[INTERNO] identificador técnico';
+COMMENT ON COLUMN app_owner.clientes.nombre           IS '[CONFIDENCIAL] dato personal';
+COMMENT ON COLUMN app_owner.clientes.cedula           IS '[RESTRINGIDO] identificador personal';
+COMMENT ON COLUMN app_owner.clientes.correo           IS '[CONFIDENCIAL] contacto personal';
+COMMENT ON COLUMN app_owner.clientes.telefono         IS '[CONFIDENCIAL] contacto personal';
+COMMENT ON COLUMN app_owner.clientes.salario          IS '[RESTRINGIDO] dato económico';
+COMMENT ON COLUMN app_owner.clientes.usuario_asignado IS '[INTERNO] control de acceso VPD';
+
+SELECT table_name, column_name, comments
+FROM   all_col_comments
+WHERE  owner = 'APP_OWNER'
+ORDER  BY table_name, column_name;
+
+SELECT table_name, column_name
+FROM   all_col_comments
+WHERE  owner = 'APP_OWNER' AND comments IS NULL;   -- esperado 0 filas
+SPOOL OFF`},
+
+  {id:"PT-16", tit:"Clon DEV/TEST enmascarado", tipo:"Prueba funcional", r:"R-CONF-04", c:["A8.11","A8.33"], obj:"Clonar FREEPDB1 y comprobar que el clon no contiene datos personales reales.", proc:["En CDB$ROOT, clonar FREEPDB1 como PDB_TEST.","En PDB_TEST, ejecutar el enmascaramiento.","Contar valores sin enmascarar.","Borrar el clon al terminar si no se necesita."], esp:"0 correos y 0 cédulas originales en PDB_TEST.", herr:"SQL*Plus, SQL Developer", req:"SYSDBA en CDB$ROOT. Si FREEPDB1 tiene tablespaces TDE, el keystore debe estar abierto. Verificar el límite de PDB de la edición Free.",
+   sql: `-- PT-16  Clon DEV/TEST enmascarado (SYS AS SYSDBA)
+SPOOL evidencias/PT-16.txt
+ALTER SESSION SET CONTAINER = CDB$ROOT;
+CREATE PLUGGABLE DATABASE pdb_test FROM freepdb1
+  FILE_NAME_CONVERT = ('/FREEPDB1/','/PDB_TEST/');
+ALTER PLUGGABLE DATABASE pdb_test OPEN;
+ALTER SESSION SET CONTAINER = pdb_test;
+
+-- Enmascaramiento: solo en el clon, nunca en FREEPDB1
+UPDATE app_owner.clientes
+SET    cedula   = LPAD(TRUNC(DBMS_RANDOM.VALUE(100000000, 999999999)), 9, '0'),
+       correo   = 'cliente' || id_cliente || '@ejemplo.test',
+       telefono = '0000-0000',
+       nombre   = 'Cliente ' || id_cliente;
+COMMIT;
+
+SELECT COUNT(*) AS correos_sin_enmascarar
+FROM   app_owner.clientes
+WHERE  correo NOT LIKE '%@ejemplo.test';            -- esperado 0
+
+SELECT COUNT(*) AS cedulas_originales
+FROM   app_owner.clientes
+WHERE  cedula IN ('100000001','100000002','100000003','100000999');   -- esperado 0
+SPOOL OFF`},
+
+  {id:"PT-17", tit:"Análisis de privilegios no usados (opcional)", tipo:"Análisis de privilegios", r:"R-CONF-01", c:["A8.2"], obj:"Identificar privilegios otorgados que la aplicación nunca usa, para revocarlos.", proc:["Crear y activar la captura.","Ejecutar la carga normal de las pruebas PT-03 a PT-08.","Detener la captura y generar resultados.","Revisar privilegios no usados."], esp:"Lista de privilegios candidatos a revocar.", herr:"SQL Developer", req:"CAPTURE_ADMIN. Confirmar las columnas con DESC dba_unused_privs.",
+   sql: ENC("PT-17","Análisis de privilegios no usados","SYS AS SYSDBA, servicio FREEPDB1") + `
+BEGIN
+  DBMS_PRIVILEGE_CAPTURE.CREATE_CAPTURE(
+    name => 'CAP_APP',
+    type => DBMS_PRIVILEGE_CAPTURE.G_DATABASE);
+  DBMS_PRIVILEGE_CAPTURE.ENABLE_CAPTURE('CAP_APP');
+END;
+/
+-- ...ejecutar la carga normal de la aplicación...
+BEGIN
+  DBMS_PRIVILEGE_CAPTURE.DISABLE_CAPTURE('CAP_APP');
+  DBMS_PRIVILEGE_CAPTURE.GENERATE_RESULT('CAP_APP');
+END;
+/
+SELECT * FROM dba_unused_privs WHERE capture = 'CAP_APP';
+SPOOL OFF`}
+];
+
+const REQUERIDOS = ["A5.12","A5.15","A5.16","A5.17","A5.18","A5.33","A8.2","A8.3","A8.5","A8.10","A8.11","A8.12","A8.13","A8.15","A8.20"];
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+const nivelDe = n => n >= 15 ? ["alto","Alto"] : n >= 8 ? ["medio","Medio"] : ["bajo","Bajo"];
+const chipR = id => `<a class="chip" href="#riesgos">${id}</a>`;
+const chipT = id => `<a class="chip" href="#tareas">${id}</a>`;
+const chipC = (id, comp) => `<a class="chip${comp ? " comp" : ""}" href="#mapeo">${id}</a>`;
+const chipP = id => `<a class="chip" href="#${id}">${id}</a>`;
+const esComp = c => !REQUERIDOS.includes(c);
+
+/* ===== Textos en lenguaje sencillo ===== */
+const SIMPLE_RIESGOS = {
+  "R-CONF-01": "La cuenta BASES1 tiene permisos de administrador completo, y no hay nada que oculte salarios o correos a quien consulta.",
+  "R-CONF-02": "Las contraseñas no tienen reglas: pueden ser simples, repetirse y aguantar 10 intentos fallidos. Además, hay cuentas abiertas que nadie usa.",
+  "R-CONF-03": "Los archivos de la base y los respaldos están sin cifrar, así que quien los copie puede leerlos. Tablas con salarios borradas en mayo siguen recuperables.",
+  "R-CONF-04": "Hay una segunda base (FREEPDB2) sin revisar que podría ser copia de la principal, y ningún dato está marcado como sensible.",
+  "R-CONF-05": "La base acepta conexiones desde cualquier computadora de la red, y la comunicación viaja sin cifrar."
+};
+RIESGOS.forEach(r => { r.cs = SIMPLE_RIESGOS[r.id] || r.causa; });
+
+const SIMPLE_CONTROLES = {
+  "A5.12": "Marcar cada columna según qué tan sensible es (restringido, confidencial, interno).",
+  "A5.15": "Dar acceso a cada tabla solo a quien lo necesita, mediante grupos de permisos (roles).",
+  "A5.16": "Una cuenta por persona, y bloquear las que nadie usa.",
+  "A5.17": "Exigir contraseñas seguras y no guardar contraseñas que se puedan leer.",
+  "A5.18": "Revisar cada cierto tiempo quién tiene qué permisos y quitar los que sobran.",
+  "A5.33": "Que solo personas designadas puedan ver o borrar el registro de auditoría.",
+  "A8.2": "Que las cuentas de las aplicaciones no tengan permisos de administrador.",
+  "A8.3": "Que cada usuario vea solo las filas que le corresponden.",
+  "A8.5": "Bloquear la cuenta tras pocos intentos fallidos de contraseña.",
+  "A8.10": "Borrar de verdad los datos que ya no se necesitan, sin dejar copias olvidadas.",
+  "A8.11": "Mostrar el dato oculto a quien no necesita ver el valor real.",
+  "A8.12": "Cifrar los archivos de la base para que no se puedan leer si alguien los copia.",
+  "A8.13": "Hacer respaldos cifrados y probar que se pueden restaurar.",
+  "A8.15": "Registrar quién consulta o modifica los datos sensibles.",
+  "A8.20": "Aceptar conexiones solo desde el propio equipo y cifrar la comunicación.",
+  "A8.24": "Usar cifrado en archivos, red y respaldos, y cuidar las llaves.",
+  "A8.8": "Mantener Oracle en la versión más reciente.",
+  "A8.33": "Usar datos falsos u ocultos en las copias de prueba."
+};
+MAPEO.forEach(m => { m.is = SIMPLE_CONTROLES[m.c] || m.imp; });
+
+const SIMPLE_MATRIZ = {
+  "M-01": "Ninguna cuenta tiene permisos sueltos de administrador, pero BASES1 tiene el paquete completo (rol DBA).",
+  "M-02": "Nadie revisa los permisos cada cierto tiempo; BASES1 conserva permisos de administrador.",
+  "M-03": "Ningún usuario tiene acceso a las tablas de otro, pero no hay un diseño de permisos por puesto.",
+  "M-04": "Quien entra a una tabla ve todas sus filas; no hay filtro por usuario.",
+  "M-05": "Salarios, correos y contraseñas se muestran completos; nada los oculta.",
+  "M-06": "Oracle registra algunos eventos por defecto, pero nadie registra quién consulta los datos personales.",
+  "M-07": "Solo SYS puede ver la auditoría, pero SYS también administra todo; un historial de salarios se guarda sin protección.",
+  "M-08": "La base usa la versión 23.26.1; Oracle ya publicó la 23.26.3.",
+  "M-09": "Hay 5 cuentas abiertas y 2 de ellas nunca se han usado.",
+  "M-10": "No hay contraseñas de fábrica, pero tampoco reglas de complejidad; una tabla guarda contraseñas de conexión.",
+  "M-11": "La cuenta se bloquea a los 10 intentos fallidos, y se conserva un formato antiguo de contraseña (11G).",
+  "M-12": "Ningún archivo de la base está cifrado.",
+  "M-13": "Hay respaldos, pero ninguno está cifrado ni se ha probado restaurarlo.",
+  "M-14": "Tablas con salarios borradas en mayo siguen recuperables en la papelera.",
+  "M-15": "Ninguna columna está marcada como sensible.",
+  "M-16": "BASES1 puede exportar toda la base porque tiene permisos de administrador.",
+  "M-17": "No hay forma definida de ocultar datos en copias de prueba; FREEPDB2 no se ha revisado.",
+  "M-18": "La base acepta conexiones desde cualquier equipo de la red, y sin cifrado."
+};
+MATRIZ.forEach(m => { m.nota = SIMPLE_MATRIZ[m.f] || m.nota; });
+
+const SIMPLE_HALLAZGOS = {
+  "H-01": ["La cuenta BASES1, que usan los proyectos del curso, tiene permisos de administrador completo (rol DBA).", "Si alguien obtiene esa contraseña, puede leer y copiar toda la base, incluidos salarios y contraseñas."],
+  "H-02": ["La tabla CONEXION_ORACLE guarda contraseñas para conectarse a otras bases. Si están cifradas se comprueba con V-01 (acción 2 del plan).", "Si se pueden leer, quien vea la tabla obtiene acceso a otras bases de datos."],
+  "H-03": ["La base acepta conexiones desde cualquier equipo de la red (puertos 1521 y 5500 abiertos) y la comunicación no va cifrada.", "En una red compartida, como la de la universidad, otra persona podría intentar entrar o espiar lo que viaja."],
+  "H-04": ["Ningún archivo de la base está cifrado.", "Quien copie los archivos del contenedor puede leer los datos sin pasar por Oracle."],
+  "H-05": ["Los 10 respaldos más recientes están sin cifrar.", "Un respaldo es una copia completa de la base: quien lo obtenga tiene todos los datos."],
+  "H-06": ["Nada oculta las columnas sensibles ni filtra las filas por usuario.", "Cualquiera con acceso a una tabla ve salarios, correos y contraseñas completos."],
+  "H-07": ["Las tablas PERSONAS y PERSONAS_LOG, con nombres y salarios, se borraron en mayo pero siguen en la papelera.", "Un dato «borrado» que se puede recuperar no está realmente eliminado, y la Ley 8968 exige poder suprimirlo."],
+  "H-08": ["Las contraseñas no tienen reglas de complejidad ni límite de reutilización, y hay 2 cuentas abiertas que nunca se han usado (AFIN y PDBADMIN).", "Las cuentas olvidadas y las contraseñas débiles son la entrada más común de un atacante."],
+  "H-09": ["Las cuentas conservan un formato antiguo de contraseña (11G) además del actual (12C).", "El formato antiguo es más fácil de descifrar si alguien lo obtiene."],
+  "H-10": ["La auditoría solo registra lo que Oracle trae por defecto; nadie registra quién consulta los datos personales.", "Si alguien lee datos indebidamente, no queda rastro para detectarlo ni probarlo."],
+  "H-11": ["Ninguna columna está marcada como sensible, ni siquiera salarios o correos.", "Sin saber qué es sensible, no se puede decidir qué cifrar u ocultar."],
+  "H-12": ["Oracle está en la versión 23.26.1 y ya existe la 23.26.3.", "Las versiones nuevas corrigen fallos de seguridad conocidos."],
+  "H-13": ["Existe una segunda base (FREEPDB2) que no se ha revisado.", "Si es una copia de la principal, tiene los mismos datos personales sin ninguna protección."]
+};
+HALLAZGOS.forEach(h => { const s = SIMPLE_HALLAZGOS[h.id]; if (s) { h.t = s[0]; h.p = s[1]; } else { h.p = ""; } });
+
+const SIMPLE_PRUEBAS = {
+  "PT-00": "Registra la versión y las opciones de seguridad disponibles antes de empezar.",
+  "PT-01": "Busca cuentas con permisos de administrador que no deberían tener.",
+  "PT-02": "Revisa quién puede administrar o exportar toda la base.",
+  "PT-03": "Demuestra que un usuario sin permiso no puede leer ni modificar una tabla.",
+  "PT-04": "Lista las cuentas y comprueba que ninguna use una contraseña de fábrica.",
+  "PT-05": "Demuestra que la cuenta se bloquea tras 3 contraseñas incorrectas.",
+  "PT-06": "Cifra un espacio de la base y comprueba que su archivo no se puede leer directamente.",
+  "PT-07": "Demuestra que la cédula aparece oculta para quien no debe verla.",
+  "PT-08": "Demuestra que cada usuario ve solo sus propias filas.",
+  "PT-09": "Hace una consulta y comprueba que queda registrada en la auditoría.",
+  "PT-10": "Comprueba que solo personas designadas pueden leer la auditoría y los registros.",
+  "PT-11": "Compara la versión instalada con la más reciente de Oracle.",
+  "PT-12": "Limita las conexiones al propio equipo y cifra la comunicación.",
+  "PT-13": "Crea un respaldo cifrado y comprueba que se puede restaurar.",
+  "PT-14": "Borra un registro y muestra si queda alguna copia recuperable.",
+  "PT-15": "Marca cada columna según qué tan sensible es y verifica que ninguna quede sin marcar.",
+  "PT-16": "Crea una copia de prueba de la base y comprueba que los datos personales quedan ocultos.",
+  "PT-17": "Encuentra permisos que se dieron pero nunca se usan, para quitarlos."
+};
+PRUEBAS.forEach(p => { p.s = SIMPLE_PRUEBAS[p.id] || ""; });
+
+/* ===== Plan de mejora (fase Actuar) ===== */
+const PLAN = [
+  {pr:"Alta",  a:"Quitar el rol DBA a BASES1 y darle un rol con solo los permisos que usan sus aplicaciones.", h:"H-01", c:["A8.2","A5.18"], m:["M-01","M-02","M-16"], v:["PT-01","PT-02"]},
+  {pr:"Alta",  a:"Revisar el formato de las contraseñas de CONEXION_ORACLE y, si se pueden leer, cifrarlas desde la aplicación.", h:"H-02", c:["A5.17"], m:["M-10"], v:["V-01"]},
+  {pr:"Alta",  a:"Publicar los puertos 1521 y 5500 solo en 127.0.0.1 y activar el cifrado de red en sqlnet.ora.", h:"H-03", c:["A8.20"], m:["M-18"], v:["PT-12","V-03"]},
+  {pr:"Alta",  a:"Crear el keystore y cifrar con TDE los tablespaces que guardan datos personales.", h:"H-04", c:["A8.12","A8.24"], m:["M-12"], v:["PT-06"]},
+  {pr:"Alta",  a:"Cifrar los respaldos RMAN y probar que se pueden restaurar.", h:"H-05", c:["A8.13"], m:["M-13"], v:["PT-13"]},
+  {pr:"Alta",  a:"Ocultar SALARIO, EMAIL y PASSWORD con Data Redaction y filtrar filas con VPD donde corresponda.", h:"H-06", c:["A8.11","A8.3"], m:["M-04","M-05"], v:["PT-07","PT-08"]},
+  {pr:"Media", a:"Purgar PERSONAS y PERSONAS_LOG de la papelera y definir un procedimiento de supresión de datos.", h:"H-07", c:["A8.10"], m:["M-14"], v:["PT-14"]},
+  {pr:"Media", a:"Crear un perfil de contraseñas con complejidad, bloqueo a los 3 intentos y sin reutilización; bloquear AFIN y PDBADMIN si no se usan.", h:"H-08", c:["A5.16","A5.17","A8.5"], m:["M-09","M-10","M-11"], v:["PT-04","PT-05"]},
+  {pr:"Media", a:"Aceptar solo el formato de contraseña 12C y cambiar las contraseñas para eliminar el formato 11G.", h:"H-09", c:["A8.5"], m:["M-11"], v:["PT-04"]},
+  {pr:"Media", a:"Auditar las consultas a tablas con datos personales y asignar un auditor distinto del administrador.", h:"H-10", c:["A8.15","A5.33"], m:["M-06","M-07"], v:["PT-09","PT-10"]},
+  {pr:"Media", a:"Marcar las 19 columnas sensibles con su nivel de clasificación.", h:"H-11", c:["A5.12"], m:["M-15"], v:["PT-15"]},
+  {pr:"Media", a:"Actualizar la imagen de Oracle a la versión 23.26.3.", h:"H-12", c:["A8.8"], m:["M-08"], v:["PT-11"]},
+  {pr:"Media", a:"Diagnosticar FREEPDB2 y, si es copia de FREEPDB1, enmascarar sus datos o eliminarla.", h:"H-13", c:["A8.11","A8.33"], m:["M-17"], v:["V-02","PT-16"]}
+];
+document.getElementById("tb-plan").innerHTML = PLAN.map((x, i) =>
+  `<tr><td class="num">${i + 1}</td><td><span class="nivel ${x.pr === "Alta" ? "alto" : "medio"}">${x.pr}</span></td><td class="min">${esc(x.a)}</td><td class="id"><a class="chip" href="#linea-base">${x.h}</a></td><td>${x.c.map(c => chipC(c, esComp(c))).join("")}</td><td>${x.m.map(f => `<a class="chip" href="#matriz">${f}</a>`).join("")}</td><td>${x.v.map(v => v.startsWith("PT") ? chipP(v) : `<a class="chip" href="#linea-base">${v}</a>`).join("")}</td></tr>`
+).join("");
+
+/* Riesgos */
+document.getElementById("tb-riesgos").innerHTML = RIESGOS.map(r => {
+  const n = r.p * r.i, [cl, tx] = nivelDe(n);
+  return `<tr><td class="id">${r.id}</td><td class="min">${esc(r.nombre)}</td><td class="min">${esc(r.cs)}<div class="sub">${esc(r.causa)}</div></td><td>${esc(r.activo)}</td>
+  <td class="num">${r.p}</td><td class="num">${r.i}</td><td><span class="nivel ${cl}">${n} · ${tx}</span></td>
+  <td>${r.tareas.map(chipT).join("")}</td><td>${r.controles.map(c => chipC(c, esComp(c))).join("")}</td></tr>`;
+}).join("");
+
+/* Mapa de calor: probabilidad 5 arriba, impacto 1 a 5 */
+(() => {
+  let h = "";
+  for (let p = 5; p >= 1; p--) {
+    h += `<div class="ax">P${p}</div>`;
+    for (let i = 1; i <= 5; i++) {
+      const [cl] = nivelDe(p * i);
+      const pins = RIESGOS.filter(r => r.p === p && r.i === i).map(r => `<span class="pin">${r.id.slice(-2)}</span>`).join("");
+      h += `<div class="cell ${cl}" title="P${p} × I${i} = ${p * i}">${pins}</div>`;
+    }
+  }
+  document.getElementById("calor").innerHTML = h;
+})();
+
+/* Tareas */
+document.getElementById("tb-tareas").innerHTML = TAREAS.map(t =>
+  `<tr><td class="id">${t.id}</td><td><b>${esc(t.tarea)}</b></td><td class="min">${esc(t.que)}</td><td>${esc(t.frec)}</td><td class="min mono">${esc(t.obj)}</td><td>${t.r.map(chipR).join("")}</td></tr>`
+).join("");
+
+/* Mapeo */
+document.getElementById("tb-mapeo").innerHTML = MAPEO.map(m =>
+  `<tr><td class="id">${chipC(m.c, m.comp)}</td><td><b>${esc(m.n)}</b>${m.comp ? '<div class="nota">Complementario propio</div>' : ""}</td><td class="min">${esc(m.j)}</td>
+  <td>${m.t.map(chipT).join("")}</td><td>${m.r.map(chipR).join("")}</td><td class="min">${esc(m.is)}<div class="sub">${esc(m.imp)}</div></td>
+  <td class="min">Prueba ${chipP(m.p)}<details class="tecnico"><summary>Ver consulta</summary><code>${esc(m.ev)}</code></details></td></tr>`
+).join("");
+
+/* Observables */
+document.getElementById("tb-obs").innerHTML = OBS.map(o => {
+  const pid = (o.como.match(/PT-\d\d/) || [""])[0];
+  return `<tr><td class="id">${o.id}</td><td>${chipC(o.c)}</td><td class="min">${esc(o.ve)}</td><td class="min">${esc(o.como)} ${pid ? chipP(pid) : ""}</td><td class="min">${esc(o.ok)}</td></tr>`;
+}).join("");
+
+/* Matriz con filtro por riesgo */
+let filtro = "Todos";
+function pintarMatriz(){
+  const filas = MATRIZ.filter(m => filtro === "Todos" || m.r === filtro);
+  document.getElementById("tb-matriz").innerHTML = filas.map(m =>
+    `<tr><td class="id">${m.f}</td><td>${chipT(m.t)} ${esc(TAREAS.find(t => t.id === m.t).tarea)}</td><td>${chipR(m.r)}</td><td>${chipC(m.c, m.comp)}</td>
+    <td class="num"><b>${m.n}</b></td><td><span class="mono">${esc(m.ev)}</span><div class="nota">confirma ${chipP(m.p)}</div></td><td><span class="estado ${estadoDe(m.n)[0]}">${estadoDe(m.n)[1]}</span></td><td class="min">${esc(m.nota)}</td></tr>`
+  ).join("");
+  const cuenta = document.getElementById("cuenta-matriz");
+  if (cuenta) cuenta.textContent = `${filas.length} de ${MATRIZ.length} filas`;
+}
+(() => {
+  const opciones = ["Todos", ...RIESGOS.map(r => r.id)];
+  const cont = document.getElementById("filtros");
+  cont.innerHTML = opciones.map(o => `<button type="button" id="f-${o}" aria-pressed="${o === filtro}" data-f="${o}">${o === "Todos" ? "Todos los riesgos" : o}</button>`).join("") + `<span class="cuenta" id="cuenta-matriz"></span>`;
+  cont.addEventListener("click", e => {
+    const b = e.target.closest("button[data-f]"); if (!b) return;
+    filtro = b.dataset.f;
+    cont.querySelectorAll("button[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.f === filtro)));
+    pintarMatriz();
+  });
+  pintarMatriz();
+})();
+
+/* Pruebas */
+document.getElementById("prep-sql").textContent = PREP;
+document.getElementById("lista-pruebas").innerHTML = PRUEBAS.map(p => `
+<details class="prueba" id="${p.id}">
+  <summary><span class="pid">${p.id}</span><span class="ptit">${esc(p.tit)}<span class="psimple">${esc(p.s)}</span></span><span class="ptipo">${esc(p.tipo)}</span></summary>
+  <div class="pbody">
+    <dl class="pcampos">
+      <div><dt>Riesgo</dt><dd>${esc(p.r)}</dd></div>
+      <div><dt>Control</dt><dd>${p.c.map(c => c === "Todos" ? "Todos" : chipC(c, esComp(c))).join("")}</dd></div>
+      <div><dt>Herramienta</dt><dd>${esc(p.herr)}</dd></div>
+      <div><dt>Objetivo</dt><dd>${esc(p.obj)}</dd></div>
+      <div><dt>Procedimiento</dt><dd><ol>${p.proc.map(x => `<li>${esc(x)}</li>`).join("")}</ol></dd></div>
+      <div><dt>Resultado esperado</dt><dd>${esc(p.esp)}</dd></div>
+      <div><dt>Evidencia</dt><dd>EV-${p.id.slice(3)}: <code>evidencias/${p.id}.txt</code> y capturas · <span class="estado">Propuesta</span></dd></div>
+      <div><dt>Requisitos y límites</dt><dd>${esc(p.req)}</dd></div>
+    </dl>
+    <div class="codigo"><button class="copiar" type="button" data-copiar="sql-${p.id}">Copiar</button><pre id="sql-${p.id}"></pre></div>
+  </div>
+</details>`).join("");
+PRUEBAS.forEach(p => { document.getElementById("sql-" + p.id).textContent = p.sql; });
+
+/* Línea base */
+document.getElementById("tb-hallazgos").innerHTML = HALLAZGOS.map(h =>
+  `<tr><td class="id">${h.id}</td><td><span class="nivel ${h.g === "Alta" ? "alto" : "medio"}">${h.g}</span></td><td class="min">${esc(h.t)}</td><td class="min">${esc(h.p)}</td><td class="mono">${esc(h.ev)}</td><td>${chipR(h.r)}</td><td>${h.c.map(c => chipC(c, esComp(c))).join("")}</td></tr>`
+).join("");
+(() => {
+  const nombres = ["Inexistente","Inicial","Diseñado","Implementado","Gestionado"];
+  document.getElementById("dist").innerHTML = nombres.map((nom, n) => {
+    const c = MATRIZ.filter(m => m.n === n).length;
+    return `<div class="item"><span class="num">${c}</span><span class="lab">filas en nivel ${n} · ${nom}</span><span class="${n < 2 && c ? "bad" : "lab"}">${estadoDe(n)[1]}</span></div>`;
+  }).join("");
+})();
+document.getElementById("v01").textContent = V01;
+document.getElementById("v02").textContent = V02;
+document.getElementById("v03").textContent = V03;
+
+document.addEventListener("click", e => {
+  const b = e.target.closest(".copiar"); if (!b) return;
+  const pre = document.getElementById(b.dataset.copiar);
+  const texto = pre.textContent;
+  const marcar = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Seleccionado"; };
+  try {
+    navigator.clipboard.writeText(texto).then(() => { b.textContent = "Copiado"; setTimeout(() => b.textContent = "Copiar", 1600); }, marcar);
+  } catch (err) { marcar(); }
+});
+
+/* Abrir una prueba si se llega con su ancla */
+function abrirAncla(){
+  const id = location.hash.slice(1);
+  const d = id && document.getElementById(id);
+  if (d && d.tagName === "DETAILS") d.open = true;
+}
+window.addEventListener("hashchange", abrirAncla);
+document.addEventListener("click", e => {
+  const a = e.target.closest('a[href^="#PT-"]'); if (!a) return;
+  const d = document.getElementById(a.getAttribute("href").slice(1)); if (d) d.open = true;
+});
+abrirAncla();
+
+/* Comprobación de trazabilidad */
+(() => {
+  const ctrlMapeo = new Set(MAPEO.map(m => m.c));
+  const ctrlObs = new Set(OBS.map(o => o.c));
+  const ctrlMat = new Set(MATRIZ.map(m => m.c));
+  const tarMat = new Set(MATRIZ.map(m => m.t));
+  const idsPT = new Set(PRUEBAS.map(p => p.id));
+  const faltan = (set) => REQUERIDOS.filter(c => !set.has(c));
+  const ptSueltas = MATRIZ.filter(m => !idsPT.has(m.p)).map(m => m.p);
+  const items = [
+    {n:RIESGOS.length, l:"riesgos R-CONF", ok:RIESGOS.length >= 5, msg:"mínimo 5"},
+    {n:TAREAS.length, l:"tareas del DBA", ok:TAREAS.every(t => tarMat.has(t.id)), msg:"todas en la matriz"},
+    {n:REQUERIDOS.length - faltan(ctrlMapeo).length, l:"controles exigidos mapeados", ok:!faltan(ctrlMapeo).length, msg:"15 de 15"},
+    {n:OBS.length, l:"controles observables", ok:OBS.length === 15 && !faltan(ctrlObs).length, msg:"uno por control"},
+    {n:MATRIZ.length, l:"filas de matriz", ok:!faltan(ctrlMat).length && !ptSueltas.length, msg:"cubren los 15 controles"},
+    {n:PRUEBAS.length, l:"pruebas en la batería", ok:true, msg:"más el diagnóstico D00-D17, ejecutado 2 veces"}
+  ];
+  document.getElementById("traza").innerHTML = items.map(x =>
+    `<div class="item"><span class="num">${x.n}</span><span class="lab">${x.l}</span><span class="${x.pend ? "bad" : x.ok ? "ok" : "bad"}">${x.ok && !x.pend ? "✓ " : ""}${x.msg}</span></div>`
+  ).join("");
+})();
+</script>
+
+</body>
+</html>
