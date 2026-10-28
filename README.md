@@ -5,7 +5,7 @@
 
 Marco de controles basado en el Anexo A de ISO/IEC 27001:2022 para proteger la confidencialidad de una base de datos Oracle desde el rol del DBA. Incluye la evaluación de una base real con un diagnóstico de solo lectura, la matriz de madurez 0-4 y un plan de mejora.
 
-- **Artefacto interactivo:** https://claude.ai/artifact/8ntR1aMdDnWvpqWmULvRfs (copia local en `artefacto/index.html`)
+- **Artefacto interactivo:** `artefacto/index.html` (se abre con doble clic en cualquier navegador)
 - **Informe:** `informe/` (PDF con marco teórico, uso de IA, declaración jurada y referencias APA 7)
 
 ## Entorno
@@ -24,8 +24,7 @@ Marco de controles basado en el Anexo A de ISO/IEC 27001:2022 para proteger la c
 ├── README.md
 ├── diagnostico_confidencialidad.sql     Diagnóstico de solo lectura (bloques D00-D17)
 ├── demostracion_diagnostico.ps1         Ejecuta el diagnóstico y guarda la evidencia con fecha
-├── guion_video.md                       Guion del video de 5 minutos
-├── artefacto/index.html                 Copia local del artefacto
+├── artefacto/index.html                 Artefacto interactivo
 ├── evidencias/                          Salidas del diagnóstico (20 y 22 oct 2026)
 ├── informe/                             Informe en PDF
 └── scripts/
